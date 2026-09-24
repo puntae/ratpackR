@@ -1,0 +1,37 @@
+# Generated general OM file
+# Run designator
+00
+# Number of species
+1
+# Stocks-per-species
+1
+# Species/stock names
+Deepwater.flathead
+#Number_of_catch_fleets
+6
+#Number_of_survey_fleets
+1
+# Number of areas
+1
+# Fleet-species links (rows species, cols fleets)
+1
+#Fleet.names
+TRAWL CPUE FIS IndustLF ISMPPort DSeine DSPort
+#First_projection_year 2023
+#TACs_apply_to_fleets
+Yes Yes Yes Yes Yes Yes Yes
+#Multispecies
+No
+#Impose_profit_constraint_on_F No
+#Use.PGMSY No
+
+# Full run
+#Number_of_simulations 2
+#Number_of_projection_years 25
+#Assessment_frequency
+ 15
+#TestCase No
+#Reduced_uncertainty 1
+
+#Delay-for-dats-sets: Index, Discard, Length, marginal age, caa
+                      0      0        0       0             0 

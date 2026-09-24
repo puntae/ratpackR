@@ -1,0 +1,181 @@
+Figs<-function()
+{
+par(mfrow=c(2,2))
+
+#TheFile<-"C:\\RESEARCH\\GBR\\GBR7\\RUNS\\DERISO1A.REP"
+Fig1("C:\\RESEARCH\\GBR\\GBR7\\RUNS\\DERISO1A.REP",1,6,6)
+#Fig1("C:\\RESEARCH\\GBR\\GBR7\\RUNS\\DERISO1B.REP",2,6,6)
+#Fig1("C:\\RESEARCH\\GBR\\GBR7\\RUNS\\DERISO1C.REP",3,6,6)
+#Fig1("C:\\RESEARCH\\GBR\\GBR7\\RUNS\\DERISO1D.REP",4,6,6)
+#TheFile<-"C:\\RESEARCH\\GBR\\GBR6\\AGESTRUC.OUT"
+#Fig2(TheFile)
+TheFile<-"C:\\RESEARCH\\GBR\\GBR6\\Fig2.prn"
+Fig3(TheFile)
+
+
+}
+
+Fig1<-function(TheFile,Cluster,Nreef,Nyear)
+{
+ skips <- 0
+
+ labs<-c("MacGill","StdDirn","RockyA","Eyrie","RockyB","14133","Dip","Glow","Yankee","Faraday",
+         "Knife","Fork","20137","20142","20136","Bax","Liff","Boulton","21131","21132","21130",
+         "21133","21124","21139")
+
+ clusts <-c("Lizard","Townsville","Mackay","Storm Cay")
+ Offset <- (Cluster-1)*Nreef
+
+ skips <- 35
+ cnts <- scan(TheFile,what=list(Ind1=0,Ind2=0,Age=0),skip=skips,n=3*Nreef)
+ skips <- skips + Nreef +1 
+ print(skips)
+
+ # Plot basic plots
+ totalline <- sum(cnts$Ind1)+sum(cnts$Ind2)
+ print(totalline)
+ plotsum1 <- scan(TheFile,what=list(Reef=0,year=0,month=0,Index=0,Obs=0,Pred=0,Res2=0),skip=skips,n=7*totalline)
+
+ xinc <- 0
+ sds1 <- NULL
+ par(mfrow=c(3,3))
+ for (i in 1:Nreef)
+  {
+   dist1<-scan(TheFile,what=list(reef=0,year=0,month=0,NULL,Obs=0,Pred=0,Res2=0),skip=skips+xinc,n=cnts$Ind1[i]*7)
+   minorplot(dist1,0,"UVS index",Offset)
+   xinc <- xinc + cnts$Ind1[i]
+   sds1 <- c(sds1,stdev(dist1$Res2))  
+  }
+ par(mfrow=c(3,3))
+ for (i in 1:Nreef)
+  {
+   dist2<-scan(TheFile,what=list(reef=0,year=0,month=0,NULL,Obs=0,Pred=0,Res2=0),skip=skips+xinc,n=cnts$Ind2[i]*7)
+   minorplot(dist2,0,"Catch survey index",Offset)
+   xinc <- xinc + cnts$Ind2[i]
+   sds1 <- c(sds1,stdev(dist1$Res2))  
+  }
+ skips <- skips + xinc+1
+ print(skips)
+
+ totalline <- sum(cnts$Age) 
+ print(totalline)
+ plotsum2 <- scan(TheFile,what=list(Reef=0,year=0,month=0,Obs=0,Pred=0,Res1=0),skip=skips,n=6*totalline)
+ xinc <- 0
+ sds2 <- NULL
+ par(mfrow=c(3,3))
+ for (i in 1:Nreef)
+  {
+   dist3<-scan(TheFile,what=list(reef=0,year=0,month=0,Obs=0,Pred=0,Res1=0),skip=skips+xinc,n=cnts$Age[i]*6)
+   minorplot(dist3,4,"Mean age",Offset)
+   xinc <- xinc + cnts$Age[i]
+   sds2 <- c(sds2,stdev(dist3$Res1))
+  }
+ skips <- skips + xinc + 1
+ print(skips)
+
+ par(mfrow=c(1,1))
+ legs <- NULL
+ for (i in 1:Nreef)
+  {
+   vec1 <- scan(TheFile,what=list(Reef=0,year=0,month=0,Bio=0),skip=skips,n=Nyear*12*4)
+   xvals <- vec1$year+vec1$month/12;	
+   if (i == 1) plot(xvals,type="l",vec1$Bio/1000,lty=i,ylim=c(0,20),xlab="Year",ylab="Exploitable biomass (t)",lwd=3)
+   if (i != 1) lines(xvals,vec1$Bio/1000,lty=i,lwd=3)
+   skips <- skips + Nyear*12
+   legs <- c(legs,labs[vec1$Reef[1]+Offset])
+  }
+ key(text=legs,lines=list(lty=1:Nreef),lwd=2)
+ str <- paste(clusts[Cluster]," cluster")
+ title(str)
+ skips <- skips + 3
+
+ UWVSq<-scan(TheFile,what=list(NULL,reef=0,q=0),skip=12,n=Nreef*3)
+ eps <-scan(TheFile,what=list(year=0,eps=0),skip=27,n=2*Nreef)
+ par(mfrow=c(2,3))
+
+ str <- paste("Cluster ",Cluster)
+ hist(plotsum1$Res2,xlab="Standardized Index residuals",xlim=c(-10,10))
+ hist(plotsum2$Res1,xlab="Standardized Age-comp residuals",xlim=c(-10,10))
+ hist(sds1,xlab="Index standard deviations",xlim=c(0,5))
+ hist(sds2,xlab="Age-comp standard deviations",xlim=c(0,5))
+ plot(UWVSq$reef,UWVSq$q,xlab="Reef number",ylab="UVS catchability",ylim=c(0,max(2,max(UWVSq$q))*1.1),pch=16,csi=0.15)
+ abline(1,0,lty=2,lwd=2)
+ plot(eps$year,eps$eps,xlab="Year",ylab="Annual net residual",ylim=c(-1,1),pch=16,csi=0.15)
+ abline(0,0,lty=2,lwd=2)
+ par(fig=c(0,1,0,1))	
+ text(2.2,2.2,str,cex=3)
+
+ 
+	
+}
+
+minorplot<-function(dist,lowy,lib1,Offset)
+{
+ labs<-c("MacGill","StdDirn","RockyA","Eyrie","RockyB","14133","Dip","Glow","Yankee","Faraday",
+         "Knife","Fork","20137","20142","20136","Bax","Liff","Boulton","21131","21132","21130",
+         "21133","21124","21139")
+
+ xvals <- dist$year+dist$month/12;	
+ ymax <- max(dist$Obs,dist$Pred)*1.1;
+ plot(xvals,dist$Obs,ylim=c(lowy,ymax),xlab="Year",pch=16,ylab=lib1,csi=0.15);
+ lines(xvals,dist$Pred,lwd=2);
+ title(labs[dist$reef[1]+Offset]);
+}
+
+Fig2<-function(TheFile)
+{
+ vec1 <- scan(TheFile,what=list(NULL,Tot1=0,Tot2=0,Tot3=0,Tot4=0),n=5)
+ vec2 <- scan(TheFile,what=list(Ages="",Age1=0,Age2=0,Age3=0,Age4=0),skip=1,n=5*15)
+
+ par(mfrow=c(2,2))
+ barplot(vec2$Age1,xlab="Age (yr)",names=vec2$Ages)
+ str <- paste("Lizard cluster; N = ",vec1$Tot1)
+ text(14,max(vec2$Age1),str,cex=1)
+ barplot(vec2$Age2,xlab="Age (yr)",names=vec2$Ages)
+ str <- paste("Townsville cluster; N = ",vec1$Tot2)
+ text(14,max(vec2$Age2),str,cex=1)
+ barplot(vec2$Age3,xlab="Age (yr)",names=vec2$Ages)
+ str <- paste("Mackay cluster; N = ",vec1$Tot3)
+ text(14,max(vec2$Age3),str,cex=1)
+ barplot(vec2$Age4,xlab="Age (yr)",names=vec2$Ages)
+ str <- paste("Storm Cay cluster; N = ",vec1$Tot4)
+ text(14,max(vec2$Age4),str,cex=1)
+ 
+ labs<-c("MacGill","StdDirn","RockyA","Eyrie","RockyB","14133","Dip","Glow","Yankee","Faraday",
+         "Knife","Fork","20137","20142","20136","Bax","Liff","Boulton","21131","21132","21130",
+         "21133","21124","21139")
+
+ par(mfrow=c(3,4))
+ skips = 28
+ for (ireef in 1:24)
+   {
+	 vec1<-scan(TheFile,what=list(num1=0),skip=skips,n=1)
+	 numline <- vec1$num1[1]
+	 vec1<- scan(TheFile,what=list(Reef=0,NULL,NULL,Est=0,CV=0),skip=skips+1,n=5*numline)
+	 skips = skips + numline+1
+	 plot(vec1$Est,vec1$CV,xlab="Estimate",ylab="Coefficient of variation",ylim=c(0,max(vec1$CV)*1.3),pch=16,csi=0.15)
+	 abline(0.2,0,lty=2)
+	 str <- paste("Reef ",ireef,": ",labs[ireef])
+	 title(str)
+   }
+
+}
+
+Fig3<-function(TheFile)
+{
+ figg <- scan(TheFile,what=list(year=0,reef1=0,reef2=0,reef3=0,reef4=0),n=5*72)
+ par(mfrow=c(1,1))
+ plot(figg$year,figg$reef1,lty=1,type='l',lwd=2,xlab="Year",ylab="Catch (kg)")
+ lines(figg$year,figg$reef2,lty=2,lwd=2)
+ lines(figg$year,figg$reef3,lty=3,lwd=2)
+ lines(figg$year,figg$reef4,lty=4,lwd=2)
+
+ legs <- c("MacGill - GC","Std Dirn - GC", "Rocky A - GF-1","Eyrie - GF-2")
+ key(text=legs,lines=list(lty=1:4),lwd=2)
+
+
+
+}
+
+
+Figs()
