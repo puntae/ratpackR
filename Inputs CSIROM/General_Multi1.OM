@@ -1,0 +1,60 @@
+# Generated general OM file
+# Run designator
+00
+# Number of species
+4
+# Stocks-per-species
+1 1 1 1
+# Species/stock names
+Pink.ling
+Tiger.flathead
+School.whiting
+Mirror.dory
+#Number_of_catch_fleets
+5
+#Number_of_survey_fleets
+0
+# Number of areas
+1
+# Fleet-species links (rows species, cols fleets)
+1
+#Fleet.names
+Etrawl TasTrawl NonTrawlOnbd StTrawl DSeine
+#First_projection_year 2024
+#TACs_apply_to_fleets
+Yes Yes Yes No Yes
+#Multispecies
+Yes
+#Impose_profit_constraint_on_F No
+#Multispecies.Wght1 100
+#Multispecies.Wght2 1000
+#Multispecies.Wght3 1
+
+#PGMSY_Primary_Species
+0 0 0 0
+#PGMSY.Limit 0.25
+#PGMSY.Linked_Species_by_fleet
+2 2 1 0 2
+
+#Indicator_Primary_Species
+0 0 0 0
+
+#Indicator_Final_TACs
+1 600 NA
+1 2200 NA
+1 1200 NA
+1 400 NA
+
+# Full run
+#Number_of_simulations 2
+#Number_of_projection_years 25
+#Assessment_frequency
+5
+3
+6
+6
+#TestCase No
+#Reduced_uncertainty 1
+
+#Delay-for-dats-sets: Index, Discard, Length, marginal age, caa
+                      0      0        0       0             0 

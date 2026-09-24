@@ -1,0 +1,60 @@
+# Generated general OM file
+# Run designator
+00
+# Number of species
+4
+# Stocks-per-species
+1 1 1 1
+# Species/stock names
+Gummy
+Dusky
+Whiskery_Shark
+Sandbar_shark
+#Number_of_catch_fleets
+9
+#Number_of_survey_fleets
+1
+# Number of areas
+1
+# Fleet-species links (rows species, cols fleets)
+1
+#Fleet.names
+Northern.shark Other Southern.shark_1_West Southern.shark_1_Zone1 Southern.shark_1_Zone2 Southern.shark_2_West Southern.shark_2_Zone1 Southern.shark_2_Zone2 WRL Survey
+#First_projection_year 2024
+#TACs_apply_to_fleets
+Yes Yes Yes Yes Yes Yes Yes Yes Yes No
+#Multispecies
+Yes
+#Impose_profit_constraint_on_F No
+#Multispecies.Wght1 100
+#Multispecies.Wght2 1000
+#Multispecies.Wght3 1
+
+#PGMSY_Primary_Species
+0 0 0 1
+#PGMSY.Limit 0.25
+#PGMSY.Linked_Species_by_fleet
+1 1 1 1 1 1 1 1 2
+
+#Indicator_Primary_Species
+0 1 0 0
+
+#Indicator_Final_TACs
+1 900 NA
+1 2000 NA
+1 2000 NA
+1 2000 NA
+
+# Full run
+#Number_of_simulations 2
+#Number_of_projection_years 25
+#Assessment_frequency
+5
+10
+15
+10
+#TestCase No
+#Reduced_uncertainty 1
+
+#Delay-for-dats-sets: Index, Discard, Length, marginal age, caa
+                      0      0        0       0             0 
