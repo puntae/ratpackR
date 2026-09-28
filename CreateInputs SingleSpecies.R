@@ -1,11 +1,11 @@
 rm(list=ls())
 
-Path <- "C:/Research/NewRat/"
+Path <- "C:/MSE/ratpackR/"
 setwd(Path)
 
 library(r4ss)
 library(readxl)
-source(paste0(Path,"NewRat_spat/R inserts/SaveFiles.R"))
+source(paste0(Path,"R inserts/SaveFiles.R"))
 
 #
 # =====================================================================================================================
@@ -1028,8 +1028,8 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
 
   Cata.mort <- matrix(0,nrow=endyr-styr+100,3)
   Cata.mort[,1] <- seq(from=styr,to=endyr+99)
-  Cata.mort[,2] <- rep(0,endyr-styr+100,3)
-  Cata.mort[,3] <- rep(1,endyr-styr+100,3)
+  Cata.mort[,2] <- rep(0,endyr-styr+100)
+  Cata.mort[,3] <- rep(1,endyr-styr+100)
   OM.obj$Cata.mort <- Cata.mort
   
   write.out.OM(OM.obj,RunFolder2,Control.Rule.Type)
@@ -1723,7 +1723,7 @@ RunType <- "Test"
 # YearAdjust - this is designed to handle cases where there are not data for the last year with catches
 # AgeAdjust - Switch off age data
 
-ExtraCat <- read.csv("newrat_spat/ExtraCatches.Csv",head=F)
+ExtraCat <- read.csv("ExtraCatches.Csv",head=F)
 ncol.Cat <- length(ExtraCat[1,])
 
 #for (Ispec in c("A1","A2","B1",paste0("C",c(1:10)),paste0("D",c(1:9)) ) )
@@ -1732,9 +1732,11 @@ ncol.Cat <- length(ExtraCat[1,])
 #for (Ispec in paste0("C",c(6,8,9,10,11)))
 #for (Ispec in paste0("C",c(8,9)))
 #for (Ispec in paste0("C",c(9)))
-for (Ispec in paste0("D",c(6)))
+# for (Ispec in paste0("D",c(11)))
 ##for (Ispec in paste0("D",c(12,19,21,28)))
- {
+for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
+
+     {
   Analsis.Type <- -999;
   YearAdjust <- 0; AgeAdjust <- F; Reduce.Uncertain <- 0; Nproj <- 50; Control.Rule.Type <- "CSIRO"
   Project.Type <- 1; FakeAreas <- 0; FillProjection <- F
@@ -1797,13 +1799,13 @@ for (Ispec in paste0("D",c(6)))
   if (Ispec=="D30")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; Species <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; Project.Type <- 1 }
 
   
-  if (Analsis.Type==1) BasePath <- paste0(Path,"Newrat_spat/Inputs Buffer/")
+  if (Analsis.Type==1) BasePath <- paste0(Path,"Inputs Buffer/")
   if (Analsis.Type==1) AssignmentPath <- paste0(Path,"Base Buffer files/")
-  if (Analsis.Type==2) BasePath <- paste0(Path,"Newrat_spat/Inputs OMF52/")
+  if (Analsis.Type==2) BasePath <- paste0(Path,"Inputs OMF52/")
   if (Analsis.Type==2) AssignmentPath <- paste0(Path,"Base OMF5 files/")
-  if (Analsis.Type==3) BasePath <- paste0(Path,"Newrat_spat/Inputs CSIRO/")
+  if (Analsis.Type==3) BasePath <- paste0(Path,"Inputs CSIRO/")
   if (Analsis.Type==3) AssignmentPath <- paste0(Path,"Base CSIRO files/")
-  if (Analsis.Type==4) BasePath <- paste0(Path,"Newrat_spat/Inputs Other/")
+  if (Analsis.Type==4) BasePath <- paste0(Path,"Inputs Other/")
   if (Analsis.Type==4) AssignmentPath <- paste0(Path,"Base Other files/")
   
   Index <- which(ExtraCat[,1]==Ispec)

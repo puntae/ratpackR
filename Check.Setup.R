@@ -1,5 +1,6 @@
 rm(list=ls())
-Path <- "C:/Research/NewRat/"
+# Path <- "C:/Research/NewRat/"
+Path <- "C:/MSE/ratpackR/"
 setwd(Path)
 
 library(r4ss)
@@ -90,12 +91,12 @@ Do.plot.tst <- function(Species,Species2,Species3=NULL,OriginalName,OriginalPath
 
 # ========================================================================================================================
 
-par(mfrow=c(4,2),oma=c(2,2,2,2),mar=c(5,4,2,1))
+par(mfrow=c(1,2),oma=c(2,2,2,2),mar=c(5,4,2,1))
 
 #for (Ispec in c("A1","A2","B1",paste0("C",c(1:11)),paste0("D",c(1:16)), paste0("E",c(1:2)), "F1" ) )
-for (Ispec in c(paste0("C",c(1:11))) )
+# for (Ispec in c(paste0("C",c(1:11))) )
 #for (Ispec in c(paste0("D",c(6,19,28))) )
-#for (Ispec in c(paste0("D",c(6))) )
+for (Ispec in c(paste0("D",c(11))) )
 #for (Ispec in c(paste0("D",c(6,12,19,28)),paste0("C",c(1:11))) )
     #for (Ispec in c(paste0("E",c(1:4))) )
  {
@@ -117,7 +118,7 @@ for (Ispec in c(paste0("C",c(1:11))) )
   
   if (Ispec=="D1") { Species <- "Milk shark"; OriginalName <- "Milk shark"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Milk.shark/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Milk.shark/"  }
   if (Ispec=="D2") { Species <- "Perch"; OriginalName <- "Perch"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Perch/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Perch/"  }
-  if (Ispec=="D3") { Species <- "Herring"; OriginalName <- "Herring"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Herring/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Herring/"  }
+  if (Ispec=="D3") { Species <- "Herring"; OriginalName <- "Herring"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/Herring/"; TempPath <- "Temp/Assess_temp_Herring/"  }
   if (Ispec=="D4") { Species <- "SSageselemod2"; OriginalName <- "SSageselemod2"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/SSageselemod2/"; TempPath <- "NewRat_spat/Temp/Assess_temp_SSageselemod2/"  }
   if (Ispec=="D5") { Species <- "Runze"; OriginalName <- "Runze"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Runze/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Runze/"  }
   if (Ispec=="D6") { Species <- "P cod"; OriginalName <- "P cod"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/P.cod/"; TempPath <- "NewRat_spat/Temp/Assess_temp_P.cod/"  }
@@ -125,7 +126,7 @@ for (Ispec in c(paste0("C",c(1:11))) )
   if (Ispec=="D8") { Species <- "Red_Emperor_Kimberley"; OriginalName <- "Red_Emperor_Kimberley"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Red_Emperor_Kimberley/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Red_Emperor_Kimberley/"  }
   if (Ispec=="D9") { Species <- "Red_Emperor_Pilbara"; OriginalName <- "Red_Emperor_Pilbara"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Red_Emperor_Pilbara/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Red_Emperor_Pilbara/"  }
   if (Ispec=="D10") { Species <- "SandySprat"; OriginalName <- "SandySprat"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/SandySprat/"; TempPath <- "NewRat_spat/Temp/Assess_temp_SandySprat/"  }
-  if (Ispec=="D11") { Species <- "WA_Dhufish"; OriginalName <- "WA_Dhufish"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/WA_Dhufish/"; TempPath <- "NewRat_spat/Temp/Assess_temp_WA_Dhufish/"  }
+  if (Ispec=="D11") { Species <- "WA_Dhufish"; OriginalName <- "WA_Dhufish"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/WA_Dhufish/"; TempPath <- "Temp/Assess_temp_WA_Dhufish/"  }
   if (Ispec=="D12") { Species <- "Sandbar_Shark"; OriginalName <- "Sandbar_Shark"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Sandbar_Shark/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Sandbar_Shark/"; NextraCat <- 4  }
   if (Ispec=="D13") { Species <- "Sandbar_Shark2"; OriginalName <- "Sandbar_Shark2"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Sandbar_Shark2/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Sandbar_Shark2/"  }
   if (Ispec=="D14") { Species <- "Sardine"; OriginalName <- "Sardine"; OriginalPath <- "Base Other Files/"; ResultsPath <- "NewRat_spat/Results/Sardine/"; TempPath <- "NewRat_spat/Temp/Assess_temp_Sardine/"  }

@@ -10,6 +10,9 @@ WriteBiol <- function(Istock,FileName,FolderResults)
   
   ObjSave <- NULL
   
+  # Brett C - OPEN THE FILE ONCE
+  fc <- file(FileName, open = "a")
+  
   write("\n#Environmental variables",file=FileName,append=T)
   for (Year in 1:(Nhist+General$Nproj+1))
    if (Stock[[Istock]]$N.env.ind >0)  
@@ -40,7 +43,8 @@ WriteBiol <- function(Istock,FileName,FolderResults)
   }
  
   write("\n#Time-varying parameters",file=FileName,append=T)
-  for (Sex in 1:Nsex)
+  # for (Sex in 1:Nsex)
+  for (Isex in 1:Nsex) # BrettC - Sex defined as wrong thing
   for (Year in 1:(Nhist+General$Nproj))
     write(c(Isex,Year+YrOffset,
             format(round(Stock[[Istock]]$LenA1TV[Year,Isex],6)),format(round(Stock[[Istock]]$LenA2TV[Year,Isex],6)),
@@ -153,6 +157,9 @@ WriteBiol <- function(Istock,FileName,FolderResults)
   FileName <- paste0(FolderResults,"/Object.",Species,".sav")
   print(FileName)
   #save(ObjSave,file=FileName)
+  
+  # Brett C ADD THIS LINE TO CLOSE THE FILE
+  close(fc)
   
 }
 
