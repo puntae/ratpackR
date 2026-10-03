@@ -719,6 +719,10 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
    }
   
   StockDetails$ClosedAreas <- matrix(1,nrow=Narea,ncol=Nhist+General$Nproj+1)
+  
+  print("StockDetails$ClosedAreas:")
+  print(StockDetails$ClosedAreas)
+  
   Index <- which(AllInput[,1]=="#Spatial:Closed_areas")
   if (length(Index) >0)
    {
@@ -729,6 +733,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
       {
        Iarea <- as.numeric(AllInput[Index+1+Iclosed,1])
        Years <- as.numeric(AllInput[Index+1+Iclosed,c(2,3)])-StockDetails$YrOffset
+
        for (Iyear in Years[1]:Years[2])
          StockDetails$ClosedAreas[Iarea,Iyear] <- 0
       }

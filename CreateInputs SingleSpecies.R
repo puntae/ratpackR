@@ -150,12 +150,21 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
     
     area.fleets <- matrix(1,nrow=nareas,ncol=nfleets)
     
+    # # Save various things
+    # OM.obj$area.fleets <- area.fleets
+    # OM.obj$area.fleets[1,1] <- 0
+    # OM.obj$area.fleets[4,1] <- 0
+    # OM.obj$area.fleets[2,nfleets] <- 0
+    # OM.obj$area.fleets[3,nfleets] <- 0
+    
     # Save various things
     OM.obj$area.fleets <- area.fleets
+    
+    # Brett version to allow 2 fake areas NOT FULLY TESTED
     OM.obj$area.fleets[1,1] <- 0
-    OM.obj$area.fleets[4,1] <- 0
-    OM.obj$area.fleets[2,nfleets] <- 0
-    OM.obj$area.fleets[3,nfleets] <- 0
+    if (nareas >= 2) OM.obj$area.fleets[2,nfleets] <- 0
+    if (nareas >= 3) OM.obj$area.fleets[3,nfleets] <- 0
+    if (nareas >= 4) OM.obj$area.fleets[4,1] <- 0
     OM.obj$nareas <- nareas 
    } # FakeAreas
 
@@ -1732,9 +1741,9 @@ ncol.Cat <- length(ExtraCat[1,])
 #for (Ispec in paste0("C",c(6,8,9,10,11)))
 #for (Ispec in paste0("C",c(8,9)))
 #for (Ispec in paste0("C",c(9)))
-# for (Ispec in paste0("D",c(11)))
+for (Ispec in paste0("D",c(11)))
 ##for (Ispec in paste0("D",c(12,19,21,28)))
-for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
+# for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
 
      {
   Analsis.Type <- -999;
@@ -1777,7 +1786,7 @@ for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
   if (Ispec=="D8")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Kimberley"; Species <- "Red_Emperor_Kimberley"  } 
   if (Ispec=="D9")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara"; Species <- "Red_Emperor_Pilbara"  } 
   if (Ispec=="D10")  { Analsis.Type <- 4; SS_folder <- "SandySprat"; Species <- "SandySprat"  } 
-  if (Ispec=="D11")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish"; Species <- "WA_Dhufish"  } 
+  if (Ispec=="D11")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish"; Species <- "WA_Dhufish" ; FakeAreas <- 2 } 
   if (Ispec=="D12")  { Analsis.Type <- 4; SS_folder <- "Sandbar_Shark"; Species <- "Sandbar_Shark"  } 
   if (Ispec=="D13")  { Analsis.Type <- 4; SS_folder <- "Sandbar_Shark2"; Species <- "Sandbar_Shark2"  } 
   if (Ispec=="D14")  { Analsis.Type <- 4; SS_folder <- "Sardine"; Species <- "Sardine"  } 
