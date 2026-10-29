@@ -1602,7 +1602,7 @@ Do.Insurance <- function(Isim,Istock,Year)
       # Base insurance
       if (Insurance.type==2)
        {
-        NetLoss <- ThreshProfit-TotalLoss1a[Ifleet]
+       NetLoss <- ThreshProfit-TotalLoss1a[Ifleet]
         if (NetLoss > 0 & ProbCME <= Delta) 
          {
           Insurance.Bought <- max(0,NetLoss/(1-CostOfInsurance))
@@ -1624,13 +1624,62 @@ Do.Insurance <- function(Isim,Istock,Year)
       # Loss with a CME compared to no CMEs (Jack)
       if (Insurance.type==4)
        {
-        NetLoss <- ThreshProfit-TotalLoss2a[Ifleet]
-        if (NetLoss > 0 & ProbCME <= Delta) 
+        Utility <- function(x,a=0.25) { (x^(1-a)-1)/(1-a) }
+        IUtility <- function(z,a=0.25) { ((1-a)*z+1)^(1/(1-a)) }
+        
+        InsuranceDemand <- function(r,a=0.25,P=ProbCME,G=Good,L=Loss){
+          Ratio <- (P*(1-r))/((1-P)*r)
+          #print(Ratio)
+          Numer <- L - (1-Ratio^(1/a))*G
+          Denom <- 1 - (1-Ratio^(1/a))*r
+          Numer/Denom
+        }
+        
+        Risk.Premium <- function(ProbCME, Good, Loss, a)
          {
-          Insurance.Bought <- max(0,NetLoss/(1-CostOfInsurance))
-          Stock[[Istock]]$Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought
-          Stock[[Istock]]$Cost.Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought*CostOfInsurance
+          Exp.Inc <- Good - Loss*ProbCME
+          Exp.Util <- ProbCME*Utility(Good-Loss,a)+(1-ProbCME)*Utility(Good,a)
+          CE.income <- IUtility(Exp.Util,a)
+          return(Exp.Inc - CE.income)
          }
+        
+        #TotalLoss0a[Ifleet] <- 11.5283661000642
+        #TotalLoss2a[Ifleet] <- 8.03184183453443
+        #ProbCME <- 0.1
+        Good <- TotalLoss0a[Ifleet]
+        Loss <- TotalLoss0a[Ifleet]-TotalLoss2a[Ifleet]
+ 
+        
+        #Good <- 120
+        #Loss <- 100
+        #ProbCME <- 0.5
+        a <- 0.25
+        a <- 3
+        
+        # Risk premium (not used)
+        Risk.P <- Risk.Premium(ProbCME,Good,Loss,a)
+
+        #Case 1: Fully insured with r=ProbCME and Insurance.Bought = Loss
+        #r <- ProbCME
+        #Insurance.Bought <- InsuranceDemand(r,a,P=ProbCME,G=Good,L=Loss)
+
+        #Case 2: Underinsured with r>ProbCME and Insurance.Bought < Loss
+        r <- 1.1*ProbCME
+        Insurance.Bought <- InsuranceDemand(r,a, P=ProbCME, G=Good, L=Loss)
+
+        #Case 3: Overinsured with r<ProbCME and Insurance.Bought > Loss
+        #r <- 0.9*ProbCME
+        #Insurance.Bought <- InsuranceDemand(r=0.9*ProbCME,a,P=ProbCME,G=Good,L=Loss)
+        #print(Insurance.Bought)
+        
+        if (Loss == 0) Insurance.Bought <- 0
+          
+        
+        Stock[[Istock]]$Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought
+        Stock[[Istock]]$Cost.Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- r*Insurance.Bought
+        print(c(Good,Loss,ProbCME,r,Insurance.Bought,r*Insurance.Bought))
+        #AA
+          #AAA
        }
       # With prediction of CME
       if (Insurance.type %in% c(5,8,9))

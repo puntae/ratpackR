@@ -2187,9 +2187,11 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
    }
   
   # Maximum F
-  Index <- which(AssInput[,1]=="#SS:Maximum_F"); CheckError(Index,"Maximum F")
-  Ass$max_F  <- as.numeric(AssInput[Index,2]);    
-  
+  Index <- which(AssInput[,1]=="#SS:Maximum_F"); 
+  if (length(Index)>0)
+   Ass$max_F  <- as.numeric(AssInput[Index,2])   
+  else
+   Ass$max_F <- StockDetails$max_F
   
   # Tier 1 specifications
   Index <- which(AssInput[,1]=="#Tier_1:MSY");                                     Ass$MSY <- as.numeric(AssInput[Index,2])
