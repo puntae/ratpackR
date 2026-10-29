@@ -885,6 +885,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
     Index <- which(AllInput[,1]==paste0("#Selex:Age_Blocks_",addv)); CheckError(Index,"Age selectivity (blocks)")
     Index2 <- which(AllInput[,1]==paste0("#Selex:Age_Block.selex_",addv)); CheckError(Index2,"Age selectivity (blocks selex)")
     Ipnt <- 0
+
     for (Ifleet in 1:General$Nfleet)
      if (N.selex.blocks[Ifleet]>0)
       for (Iblk in 1:N.selex.blocks[Ifleet])  
@@ -893,7 +894,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
         Sel.yr1 <- as.numeric(AllInput[Index+Ipnt,1]); Sel.yr2 <- as.numeric(AllInput[Index+Ipnt,2]);
         if (Sel.yr2==Nhist) Sel.yr2 <- Nhist+General$Nproj+1
         Sels <-  as.numeric(AllInput[Index2+Ipnt,1:MaxAge]);
-        for (Iyr in Sel.yr1:Sel.yr2) SelAge[Ifleet,,Iyr] <- Sels
+        for (Iyr in Sel.yr1:Sel.yr2) SelAge[Isex,Ifleet,,Iyr] <- Sels
       }
    }
   
@@ -2185,6 +2186,11 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
     for (Ipred in 1:Num.Pred) Ass$Pred_Selex_par_phase[Ipred,]  <- as.numeric(AssInput[Index+Ipred,1:8])
    }
   
+  # Maximum F
+  Index <- which(AssInput[,1]=="#SS:Maximum_F"); CheckError(Index,"Maximum F")
+  Ass$max_F  <- as.numeric(AssInput[Index,2]);    
+  
+  
   # Tier 1 specifications
   Index <- which(AssInput[,1]=="#Tier_1:MSY");                                     Ass$MSY <- as.numeric(AssInput[Index,2])
   Index <- which(AssInput[,1]=="#Tier_1:SPR_target");                              Ass$SPR_target <- as.numeric(AssInput[Index,2])
@@ -2245,21 +2251,22 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
   Index <- which(AssInput[,1]=="#Tier_5:Option");      
   if (Ass$Type == "Tier_5" & length(Index)>0)
    {
-    Ass$Tier5.Option <- as.numeric(AssInput[Index,2])
+    Ass$Tier5$Option <- as.numeric(AssInput[Index,2])
     Ass$TAC.management <- "No"
-    if (Ass$Tier5.Option %in% c(1,21)) 
+    if (Ass$Tier5$Option %in% c(1,21)) 
      {
       Index <- which(AssInput[,1]=="#Tier_5:Years");
-      Ass$Tier5.Years <-as.numeric(AssInput[Index,c(2,3)])
+      Ass$Tier5$Years <-as.numeric(AssInput[Index,c(2,3)])
     }
-    Ass$Tier5.Rebuilding <- F
+    Ass$Tier5$Rebuilding <- F
    }
   
   # Tier 6 specifications
-  if (Ass$Type == "Tier_6")
+  if (Ass$Type == "Tier_6a")
    {
     print("Caitlin is here") 
-    
+    Index <- which(AssInput[,1]=="#Tier_6a:Option"); 
+    Ass$Tier6a$Option <- as.numeric(AssInput[Index,2])
    }
   
   

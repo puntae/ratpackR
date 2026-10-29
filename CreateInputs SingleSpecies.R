@@ -71,8 +71,8 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   nlen <- length(model0$biology$Len_lo)
   nfleets <- dat$Nfleets
   catch.fleets <- which(dat$fleetinfo$type==1)
-  area.fleets <- dat$fleetinfo$area
   nfleet.catch <- max(catch.fleets)
+  area.fleets <- matrix(dat$fleetinfo$area,nrow=nareas,ncol=nfleets)
   
   OM.obj$styr <- styr
   OM.obj$endyr <- endyr
@@ -1028,8 +1028,8 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
 
   Cata.mort <- matrix(0,nrow=endyr-styr+100,3)
   Cata.mort[,1] <- seq(from=styr,to=endyr+99)
-  Cata.mort[,2] <- rep(0,endyr-styr+100,3)
-  Cata.mort[,3] <- rep(1,endyr-styr+100,3)
+  Cata.mort[,2] <- rep(0,endyr-styr+100)
+  Cata.mort[,3] <- rep(1,endyr-styr+100)
   OM.obj$Cata.mort <- Cata.mort
   
   write.out.OM(OM.obj,RunFolder2,Control.Rule.Type)
@@ -1207,6 +1207,7 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   sel.Phases <- matrix(0,nrow=nfleets,ncol=15)
   sel.pars <- matrix(0,nrow=nfleets,ncol=15)
   Nsel.pars <- rep(0,nfleets)
+  print(Nsel.pars)
   sel.blocks.no <- matrix(0,nrow=nfleets,ncol=15)
   sel.blocks.fn <- matrix(0,nrow=nfleets,ncol=15)
   sel.ann.devs.use <- matrix(0,nrow=nfleets,ncol=15)
@@ -1702,6 +1703,10 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   EM.obj$age.ret.dev.vals <- age.ret.dev.vals
   EM.obj$age.ret.dev.phs <- age.ret.dev.phs
   
+  # -----------------------------------------------------------------------------------------------------------------------------------
+  # Maximum F
+  EM.obj$maxF <- ctl$maxF
+  
   # -------------------------------------------------------------------------------------------------------------------
   
   cat("SAVING",RunFolder3a,"\n")
@@ -1729,11 +1734,12 @@ ncol.Cat <- length(ExtraCat[1,])
 #for (Ispec in c("A1","A2","B1",paste0("C",c(1:10)),paste0("D",c(1:9)) ) )
 #for (Ispec in paste0("D",c(19,28)))
 #for (Ispec in paste0("C",c(1:11)))
-#for (Ispec in paste0("C",c(6,8,9,10,11)))
+for (Ispec in paste0("C",c(6,8,9,10,11)))
 #for (Ispec in paste0("C",c(8,9)))
 #for (Ispec in paste0("C",c(9)))
-for (Ispec in paste0("D",c(6)))
+#for (Ispec in paste0("D",c(6)))
 ##for (Ispec in paste0("D",c(12,19,21,28)))
+#for (Ispec in paste0("D",c(14,15,16,17)))
  {
   Analsis.Type <- -999;
   YearAdjust <- 0; AgeAdjust <- F; Reduce.Uncertain <- 0; Nproj <- 50; Control.Rule.Type <- "CSIRO"

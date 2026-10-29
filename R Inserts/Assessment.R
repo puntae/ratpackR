@@ -452,7 +452,12 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
    {
     write("#_ #_Age_natmort_by sex x growthpattern",file=file.name,append=T)
     for (Isex in 1:Nsex)
-     write(Stock[[Istock]]$Mbase[Isex,],ncol=MaxAge,file=file.name,append=T)   
+     {
+      M.val <- Stock[[Istock]]$Mbase[Isex,1:MaxAge]
+      if (Ass$SS_M_Bias < 0)  M.val <- rep(-1*Ass$SS_M_Bias,MaxAge)
+      if (Ass$SS_M_Bias > 0)  M.val <-  M.val*(Ass$SS_M_Bias)
+      write(M.val,ncol=length( M.val),file=file.name,append=T)   
+     }
    }
   write("#",file=file.name,append=T)
   
@@ -750,7 +755,7 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
   write("0.2 # F ballpark value in units of annual_F",file=file.name,append=T)
   write("-75 # F ballpark year (neg value to disable)",file=file.name,append=T)
   write("3 # F_Method:  1=Pope midseason rate; 2=F as parameter; 3=F as hybrid; 4=fleet-specific parm/hybrid (#4 is superset of #2 and #3 and is recommended)",file=file.name,append=T)
-  write("4 # max F (methods 2-4) or harvest fraction (method 1)",file=file.name,append=T)
+  cat(Ass$max_F," # max F (methods 2-4) or harvest fraction (method 1)\n",file=file.name,append=T)
   write("5  # N iterations for tuning in hybrid mode; recommend 3 (faster) to 5 (more precise if many fleets)",file=file.name,append=T)
   write("#",file=file.name,append=T)
   
@@ -2188,7 +2193,7 @@ Run_Tier4b<- function(Isim,Istock,Year)
 
 Run_Tier5<- function(Isim,Istock,Year,Plot=T)
 {
-  Option <- Stock[[Istock]]$Ass$Tier5.Option
+  Option <- Stock[[Istock]]$Ass$Tier5$Option
   #cat("Running Tier 4",Isim,Istock,Year,Option,"\n")
   
   Narea <- General$Narea
@@ -2202,7 +2207,7 @@ Run_Tier5<- function(Isim,Istock,Year,Plot=T)
     for (Ifleet in 1:Ncat_fleet)
     {
       Icnt <- 0
-      for (Iyear in Stock[[Istock]]$Ass$Tier5.Years[1]:Stock[[Istock]]$Ass$Tier5.Years[2]-Stock[[Istock]]$YrOffset)  
+      for (Iyear in Stock[[Istock]]$Ass$Tier5$Years[1]:Stock[[Istock]]$Ass$Tier5$Years[2]-Stock[[Istock]]$YrOffset)  
       { MeanF[Iarea,Ifleet] <- MeanF[Iarea,Ifleet] + Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear]; Icnt <- Icnt + 1 }
       MeanF[Iarea,Ifleet] <- MeanF[Iarea,Ifleet]  / Icnt
     }
@@ -2259,9 +2264,9 @@ Run_Tier5<- function(Isim,Istock,Year,Plot=T)
     BMSY_prox <- 0.4; FMSY_prox <- 0.4
     Alpha <- 0.05*BMSY_prox
     Close.Thresh <- 0.25
-    if (Depl < Close.Thresh) Stock[[Istock]]$Ass$Tier5.Rebuilding <<- T
-    if (Depl > BMSY_prox) Stock[[Istock]]$Ass$Tier5.Rebuilding <<- F
-    if (Stock[[Istock]]$Ass$Tier5.Rebuilding == F) Alpha <- 0.3*BMSY_prox
+    if (Depl < Close.Thresh) Stock[[Istock]]$Ass$Tier5$Rebuilding <<- T
+    if (Depl > BMSY_prox) Stock[[Istock]]$Ass$Tier5$Rebuilding <<- F
+    if (Stock[[Istock]]$Ass$Tier5$Rebuilding == F) Alpha <- 0.3*BMSY_prox
     
     # Apply the HCR to get the Fmultipler
     if (Depl < Close.Thresh)

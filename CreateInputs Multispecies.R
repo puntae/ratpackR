@@ -58,7 +58,6 @@ do.process.OM <- function(OM.obj,Fleet.to.Metier,Nmetiers,FileName1,MetierNames,
    {
     Initial.sel <- NULL; for (Imet in 1:Nmetiers) Initial.sel <- rbind(Initial.sel,OM.obj.org$Size_Initial.sel_mal[SelOrig[Imet],])
     OM.obj$Size_Initial.sel_mal <- Initial.sel
-    print(OM.obj.org$Size_Nblocks.selex_mal)
     Size_Nblocks.selex <- NULL; for (Imet in 1:Nmetiers) Size_Nblocks.selex <- c(Size_Nblocks.selex,OM.obj.org$Size_Nblocks.selex_mal[SelOrig[Imet]])
     OM.obj$Size_Nblocks.selex_mal <- Size_Nblocks.selex
     #if (OM.obj.org$Size_Nblocks.selex[1]>0) Accum <- 1 else Accum <- 0; for (Imet in 2:nfleets)   Accum  <- c(Accum, Accum[Imet-1]+OM.obj.org$Size_Nblocks.selex[Imet]) 
@@ -139,8 +138,7 @@ do.process.OM <- function(OM.obj,Fleet.to.Metier,Nmetiers,FileName1,MetierNames,
     Initial.mort <- NULL; for (Imet in 1:Nmetiers) Initial.mort <- rbind(Initial.mort,OM.obj.org$Size_Initial.mort_mal[SelOrig[Imet],])
     OM.obj$Size_Initial.mort_mal <- Initial.mort
    }
-  print("size dn")
-  
+ 
   # Selectivity and retention (Age)
   # Age-based selectivity (Females)
   Initial.sel <- NULL; for (Imet in 1:Nmetiers) Initial.sel <- rbind(Initial.sel,OM.obj.org$Age_Initial.sel_fem[SelOrig[Imet],])
@@ -270,9 +268,7 @@ do.process.OM <- function(OM.obj,Fleet.to.Metier,Nmetiers,FileName1,MetierNames,
    for (Iarea in 1:nareas)
      area.fleets[Iarea,Imet] <- OM.obj.org$area.fleets[Iarea,SelOrig[Imet]]
   OM.obj$area.fleets <- area.fleets
-  print(OM.obj.org$area.fleets)
-  print(area.fleets)
-
+ 
   # --------------------------------------------------------------------------------------------------------------------------------
   # index data
   OM.obj$index.Use <- rep("No",Nmetiers);    for (Imet in 1:Nmetiers) if (IndexOrig[Imet]!=0) OM.obj$index.Use[Imet]    <-   OM.obj.org$index.Use[IndexOrig[Imet]]     else OM.obj$index.Use[Imet] <- "No"
@@ -449,6 +445,7 @@ do.process.EM <- function(OM.obj,EM.obj,Fleet.to.Metier,Nmetiers,Nmetiers.catch,
   EM.obj$size_selex_types.pattern    <- rep(0,Nmetiers)
   EM.obj$size_selex_types.special    <- rep(0,Nmetiers)
   EM.obj$size_selex_types.male       <- rep(0,Nmetiers)
+  EM.obj$size_nsel.pars             <- rep(0,Nmetiers)
   EM.obj$size_selex_types.sel.pars  <- matrix(0,nrow=Nmetiers,ncol=15)
   EM.obj$size_selex_types.sel.phase <- matrix(0,nrow=Nmetiers,ncol=15)
   EM.obj$size_selex_types.blocks.no <-  matrix(0,nrow=Nmetiers,ncol=15)
@@ -464,6 +461,7 @@ do.process.EM <- function(OM.obj,EM.obj,Fleet.to.Metier,Nmetiers,Nmetiers.catch,
      EM.obj$size_selex_types.pattern[Imet]    <- EM.obj.org$size_selex_types.pattern[SelOrig[Imet]]
      EM.obj$size_selex_types.special[Imet]    <- EM.obj.org$size_selex_types.special[SelOrig[Imet]]
      EM.obj$size_selex_types.male[Imet]       <- EM.obj.org$size_selex_types.male[SelOrig[Imet]]
+     EM.obj$size_nsel.par[Imet]               <- EM.obj.org$size_nsel.par[SelOrig[Imet]]
      EM.obj$size_selex_types.sel.pars[Imet,]  <- EM.obj.org$size_selex_types.sel.pars[SelOrig[Imet],]
      EM.obj$size_selex_types.sel.phase[Imet,] <- EM.obj.org$size_selex_types.sel.phase[SelOrig[Imet],]
      EM.obj$size_selex_types.blocks.no[Imet,] <- EM.obj.org$size_selex_types.blocks.no[SelOrig[Imet],]
@@ -595,6 +593,7 @@ do.process.EM <- function(OM.obj,EM.obj,Fleet.to.Metier,Nmetiers,Nmetiers.catch,
   EM.obj$age_selex_types.pattern    <- rep(0,Nmetiers)
   EM.obj$age_selex_types.special    <- rep(0,Nmetiers)
   EM.obj$age_selex_types.male       <- rep(0,Nmetiers)
+  EM.obj$age_nsel.pars              <- rep(0,Nmetiers)
   EM.obj$age_selex_types.sel.pars  <- matrix(0,nrow=Nmetiers,ncol=15)
   EM.obj$age_selex_types.sel.phase <- matrix(0,nrow=Nmetiers,ncol=15)
   EM.obj$age_selex_types.blocks.no <-  matrix(0,nrow=Nmetiers,ncol=15)
@@ -609,6 +608,7 @@ do.process.EM <- function(OM.obj,EM.obj,Fleet.to.Metier,Nmetiers,Nmetiers.catch,
       EM.obj$age_selex_types.pattern[Imet]    <- EM.obj.org$age_selex_types.pattern[SelOrig[Imet]]
       EM.obj$age_selex_types.special[Imet]    <- EM.obj.org$age_selex_types.special[SelOrig[Imet]]
       EM.obj$age_selex_types.male[Imet]       <- EM.obj.org$age_selex_types.male[SelOrig[Imet]]
+      EM.obj$age_nsel.pars[Imet]              <- EM.obj.org$age_nsel.pars[SelOrig[Imet]]
       EM.obj$age_selex_types.sel.pars[Imet,]  <- EM.obj.org$age_selex_types.sel.pars[SelOrig[Imet],]
       EM.obj$age_selex_types.sel.phase[Imet,] <- EM.obj.org$age_selex_types.sel.phase[SelOrig[Imet],]
       EM.obj$age_selex_types.blocks.no[Imet,] <- EM.obj.org$age_selex_types.blocks.no[SelOrig[Imet],]
@@ -753,11 +753,11 @@ DO.Create <- function(Species.Names,FileName)
    RunFolder2a <- paste0(InputPath,Species2,".OM.Sav")
    RunFolder3a <- paste0(InputPath,Species2,".EM.Sav")
    load(file=RunFolder2a)
-   OM.obj1 <-  OM.obj
+   OM.obj1 <<-  OM.obj
    OM.obj1$fleetnames <- MetierNames
    #print(str(OM.obj1))
    load(file=RunFolder3a)
-   EM.obj1 <-  EM.obj
+   EM.obj1 <<-  EM.obj
    #print(str(EM.obj1))
    print("loaded")
 
@@ -781,6 +781,7 @@ DO.Create <- function(Species.Names,FileName)
                            Nmetiers=N.metiers.final,Nmetiers.catch=N.catch.metiers.final,
                            FileName1=paste0(Species2,".OM"),MetierNames=MetierNames,
                            SelOrig=SelOrig,DataOrig=DataOrig,IndexOrig=IndexOrig)
+   print("Done OM processing")
    do.process.EM(OM.obj1,EM.obj,Fleet.to.Metier=Fleet.to.Metier,
                  Nmetiers=N.metiers.final,Nmetiers.catch=N.catch.metiers.final,
                  FileName1=paste0(Species2,".EM"),
@@ -826,7 +827,7 @@ BasePath <- "C:/Research/NewRat/Newrat_spat/"
 InputPath <- "C:/Research/NewRat/Newrat_spat/Inputs Other/"
 OutputPath <- "C:/Research/NewRat/Newrat_spat/Inputs CaitLinM/"
 Species.Names <- c("Sardine","Mackerel","Anchovy","Squid")
-#DO.Create(Species.Names,"Caitlin.csv")
+DO.Create(Species.Names,"Caitlin.csv")
 
 BasePath <- "C:/Research/NewRat/Newrat_spat/"
 InputPath <- "C:/Research/NewRat/Newrat_spat/Inputs Other/"

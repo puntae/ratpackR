@@ -893,6 +893,10 @@ write.out.EM <- function(OM.obj,EM.obj,RunFolder3,Control.Rule.Type,Byproduct.sp
   write(paste0("#SS:Early_dev_first_year ",0),RunFolder3,append=T)
   write(paste0("#SS:Max_bias_adjust      ",EM.obj$max_bias_adj),RunFolder3,append=T)
   
+  write("\n# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n",RunFolder3,append=T)
+  write(paste0("#SS:Maximum_F ",EM.obj$maxF),RunFolder3,append=T)
+
+  write("\n# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n",RunFolder3,append=T)
   write("",RunFolder3,append=T)
   write("#Tier_4a:logr_init -1",RunFolder3,append=T)
   write("#Tier_4a:K_init_mult 1.2",RunFolder3,append=T)
@@ -956,7 +960,12 @@ write.out.EM <- function(OM.obj,EM.obj,RunFolder3,Control.Rule.Type,Byproduct.sp
   write("",RunFolder3,append=T)
   write("#Tier_5:Option 0",RunFolder3,append=T)
   write("#Tier_5:Years 1 2",RunFolder3,append=T)
+
+  write("",RunFolder3,append=T)
+  write("#Tier_6a:Option 0",RunFolder3,append=T)
+  write("#Tier_6a:To Come",RunFolder3,append=T)
   
+    
   write("====================================================================================================================",RunFolder3,append=T)
   write(" Management specifications",RunFolder3,append=T)
   write("====================================================================================================================",RunFolder3,append=T)

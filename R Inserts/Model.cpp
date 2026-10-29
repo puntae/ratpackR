@@ -213,7 +213,7 @@ List Project(List BasicData) {
 	  else
 	   {
         // Apply control rule to compute the Target
-        if (SSB(Iyear) < 0.2*SSB0 | SSB(Iyear) < CutOff*SSB0)
+        if (SSB(Iyear) < 0.2*SSB0 || SSB(Iyear) < CutOff*SSB0)
          Fuse = 0;
         else
          if (SSB(Iyear) > Inflect*SSB0)

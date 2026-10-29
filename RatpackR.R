@@ -204,15 +204,15 @@ HybridA <- function(Istock,Year,Cat.H,Initial.Eqn=F,Use.Profit.constraint="No")
   # Allocate catch by fleet to catch by fleet and area
   Cat.H2 <- matrix(0,nrow=Narea,ncol=Ncat_fleet)
   for (Ifleet in 1:Ncat_fleet)
-   if (Cat.H[Ifleet]>0)
+   if (Cat.H[Ifleet]>1.0e-9)
     {
      # AEP - need to update for closed areas here
      Bvul <- rep(0,Narea)
      for (Iarea in 1:Narea) Bvul[Iarea] <- sum(N.H[Iarea,,]*Stock[[Istock]]$UseFleet[Iarea,Ifleet,Year]*SelRetWght.H[Ifleet,,])*Stock[[Istock]]$ClosedAreas[Iarea,Year]
      Bvul <- Bvul/sum(Bvul)
      Cat.H2[,Ifleet] <- Cat.H[Ifleet]*Bvul
-    }
-
+   }
+ 
   # Solve for F by area  
   for (Iarea in 1:Narea)
    {
@@ -685,7 +685,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
       Ipnt <- 0
       for (Ifleet in 1:Ncat_fleet)
        for (Iarea in 1:Narea)
-        if (General$TACs.fleets[Ifleet]=="Yes")
+        if (General$Fleet.Search[Ifleet]=="Yes")
          { Ipnt <- Ipnt + 1; FullF[Iarea,Istock,Ifleet] <- LastEffort[Iarea,Istock,Ifleet]*Multipliers[Ipnt] }
         else
          FullF[Iarea,Istock,Ifleet] <- Stock[[Istock]]$AveF[Iarea,Ifleet]
@@ -740,7 +740,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
       if (ProjectTAC > TargetTAC) Obj1 <- Obj1 + General$Multispecies.Wght2*(ProjectTAC-TargetTAC)^4
       
       # Match the TAC (only key commericial species)
-      if (Nstocks==1 || General$PGMSY.Primary.Species[Istock]==0)
+      if (Nstocks==1 ||  General$Species.Hybrid[Istock]=="No")
        {
         Obj0 <- Obj0 + General$Multispecies.Wght1*(TargetTAC-ProjectTAC)^2
        }
@@ -759,7 +759,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
     General$Multi$Obj0[Jyear] <<- Obj0
     General$Multi$Obj1[Jyear] <<- Obj1
     General$Multi$Obj2[Jyear] <<- Obj2
-    General$Multi$Multipliers[Jyear,] <<- Multipliers
+    General$Multi$Multipliers[Jyear,1:length(Multipliers)] <<- Multipliers
     General$Multi$TargetTACs[Jyear,] <<- TargetTACs
     General$Multi$EstTACs[Jyear,] <<- EstTACs
     
@@ -778,7 +778,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
     LastEffort[Iarea,Istock,Ifleet] <- Stock[[Istock]]$FullF[Iarea,Ifleet,Stock[[Istock]]$Nhist+Jyear-1]
  
   # Minimize
-  Neffort <- sum(General$TACs.fleets=="Yes")
+  Neffort <- sum(General$Fleet.Search=="Yes")
   Pars <- rep(-1,Narea*Neffort)
 
   ss <- nlminb(Pars,Minfun,control=list(eval.max=100))
@@ -1355,18 +1355,35 @@ Do.Project <- function(Isim)
     if (General$MultiStock.Version=="Yes")
      {
       if(Stock[[Istock]]$Ass$TAC.management=="No") {print("Not coded"); stopping}
-      TAC_mult <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+      
+      # Lets start with the species for which we can apply Hybrid
       for (Istock in 1:General$Nstocks)
-       for (Ifleet in 1:General$Ncat_fleet)
-        TAC_mult[Istock,Ifleet]<- sum(TACs[Istock,,Ifleet,1])
-      print("next step in multispecies")
-      FullFpass <- Solve.for.multispecies.F(Jyear,TAC_mult)
-      for (Istock in 1:General$Nstocks) 
-       for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) 
+       if (General$Species.Hybrid[Istock]=="Yes")
         {
          Iyear <- Stock[[Istock]]$Nhist+Jyear
-         Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- FullFpass[Iarea,Istock,Ifleet]
+         TAC.mat <- matrix(TACs[Istock,,,1],nrow=Stock[[Istock]]$NassArea,ncol=Ncat_fleet,byrow=T)
+         TheCat <- apply(TAC.mat,2,sum)
+         Fout <- HybridA(Istock,Iyear,TheCat,Use.Profit.constraint=General$Use.Profit.constraint)
+         for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- Fout[Iarea,Ifleet]
+         General$Multi$TargetTACs[Jyear,Istock] <<- sum(TheCat)
         }
+        
+      # Only apply the non-linear minimization if there are actual technical interactions
+      if (any(General$Species.Hybrid == "No"))
+       {
+        TAC_mult <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+        for (Istock in 1:General$Nstocks)
+         for (Ifleet in 1:General$Ncat_fleet)
+          TAC_mult[Istock,Ifleet]<- sum(TACs[Istock,,Ifleet,1])
+        print("next step in multispecies")
+        FullFpass <- Solve.for.multispecies.F(Jyear,TAC_mult)
+        for (Istock in 1:General$Nstocks) 
+         for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) 
+          {
+           Iyear <- Stock[[Istock]]$Nhist+Jyear
+           Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- FullFpass[Iarea,Istock,Ifleet]
+         }
+       } # if (any(General$Species.Hybrid == "No"))
      } # Solve for F by fleet and stock (depends on version of the code)
     
     # Save TACS
@@ -1378,6 +1395,13 @@ Do.Project <- function(Isim)
     
     # update the population dynamics
     for (Istock in 1:General$Nstocks) Project.One.Ahead(Istock,Stock[[Istock]]$Nhist+Jyear)
+    
+    # Save predicted catch for hybrid stocks
+    if (General$MultiStock.Version=="Yes")
+     for (Istock in 1:General$Nstocks)
+      if (General$Species.Hybrid[Istock]=="Yes")
+       General$Multi$EstTACs[Jyear,Istock] <<- sum(Stock[[Istock]]$CatchRetained[,,Stock[[Istock]]$Nhist+Jyear])
+    
   }
   #print(Stock[[1]]$SSB)
   #print(Stock[[1]]$SSB/Stock[[1]]$SSB0*100)
@@ -1692,6 +1716,40 @@ Read.General.File <- function(GeneralFile,RunNo)
 # ======================================================================================================================================
 # ======================================================================================================================================
 
+ReviewFsolver <- function()
+ {
+  
+  # Which species can be handled using the hybrid methods / which fleets are "in play"
+  Species.Hybrid <- rep("Yes",General$Nstocks)
+  Fleet.Search <- rep("No",General$Ncat_fleet)
+  
+  Species.Fleet.Catch <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+  for (Istock in 1:General$Nstocks)
+   for (Ifleet in 1:General$Ncat_fleet)  
+    {
+     if (Stock[[Istock]]$CatchType %in% c(1,2)) Species.Fleet.Catch[Istock,Ifleet] <- sum(Stock[[Istock]]$CatchInp[,Ifleet])
+     if (Stock[[Istock]]$CatchType %in% c(3)) Species.Fleet.Catch[Istock,Ifleet] <- sum(Stock[[Istock]]$F.Selex.Inp[,Ifleet],)
+    }
+  print(Species.Fleet.Catch)
+  
+  for (Istock in 1:General$Nstocks)
+   if (General$PGMSY.Primary.Species[Istock] == 0)  
+    {
+      for (Ifleet in 1:General$Ncat_fleet)
+      if (Species.Fleet.Catch[Istock,Ifleet] >0 & sum(Species.Fleet.Catch[-Istock,Ifleet])>0) Species.Hybrid[Istock] <- "No"
+      if (Species.Hybrid[Istock] == "No") Fleet.Search[which(Species.Fleet.Catch[Istock,]>0)] <- "Yes"
+    }
+   else
+     Species.Hybrid[Istock] <- "NA"
+  
+  # Remove fleets that are not in play in the future
+  Fleet.Search[which(General$TACs.fleet=="No")] <- "No"
+  
+  General$Species.Hybrid <<- Species.Hybrid
+  General$Fleet.Search <<- Fleet.Search
+ }
+
+# ======================================================================================================================================
 DoRun <- function(GeneralFile,RunNo)
 {
   # Read the general file
@@ -1721,11 +1779,16 @@ DoRun <- function(GeneralFile,RunNo)
       R0Save1[[Istock]]$Save1 <- Stock[[Istock]]$R00
       R0Save1[[Istock]]$Save2 <- Stock[[Istock]]$R00.orig
       R0Save1[[Istock]]$Save3 <- Stock[[Istock]]$R0
-     }
+    }
     print("Done read")
+    
+    # Now check whether we can use the single-species version of the methof to solve for F
+    if ( General$MultiStock.Version=="Yes") ReviewFsolver()
+    
+    # Save some output files
     for (Istock in 1:General$Nstocks) WriteBiol(Istock,General$BiolSaveName,General$FolderResults)
     for (Istock in 1:General$Nstocks) WriteLog(Isim,Istock,General$LogName)
-
+ 
     print("Solve for initial depletion")
     for (Istock in 1:General$Nstocks)
      if (!is.na(Stock[[Istock]]$Target.Depletion))
