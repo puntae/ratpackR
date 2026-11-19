@@ -25,8 +25,9 @@ DataGen <- function(Istock,Year,BioPreds)
 
   # Index data
   for (IassArea in 1:NassArea)
-    for (Ifleet in 1:Nfleet)
-      if (Stock[[Istock]]$Data$Index.spec[IassArea,Year,Ifleet] > 0)
+   for (Ifleet in 1:Nfleet)
+    if (Stock[[Istock]]$Data$Is_index[Ifleet] == "Yes")
+     if (Stock[[Istock]]$Data$Index.spec[IassArea,Year,Ifleet] > 0)
       {
         Use <- which(FleetsToAreas==IassArea)
         TrueBiomass <- sum(BioPreds[Use,Ifleet]) 
@@ -47,14 +48,16 @@ DataGen <- function(Istock,Year,BioPreds)
   
   # Discard data
   for (Ifleet in 1:Ncat_fleet)
+   if (Stock[[Istock]]$Data$Is_discard[Ifleet] == "Yes")
     for (IassArea in 1:NassArea)
-      if (Stock[[Istock]]$Data$Discard.spec[IassArea,Year,Ifleet] > 0  & Stock[[Istock]]$CatchTotal[IassArea,Ifleet,Year] > 1.0e-5)
+      if (Stock[[Istock]]$Data$Discard.spec[IassArea,Year,Ifleet] > 0  & sum(Stock[[Istock]]$CatchTotal[which(FleetsToAreas==IassArea),Ifleet,Year]) > 1.0e-5) 
        {
         Use <- which(FleetsToAreas==IassArea)
         #cat(Ifleet,Year,Stock[[Istock]]$Data$NdiscardData,"\n")
         Stock[[Istock]]$Data$NdiscardData <<- Stock[[Istock]]$Data$NdiscardData+1
-        Discard <- Stock[[Istock]]$CatchTotal[IassArea,Ifleet,Year] - Stock[[Istock]]$CatchRetained[IassArea,Ifleet,Year]+1.0e-20
-        if (Stock[[Istock]]$Data$Discard.type[Ifleet]==2) Discard <- Discard/(Stock[[Istock]]$CatchTotal[IassArea,Ifleet,Year]+1.0e-20)
+        Discard <- sum(Stock[[Istock]]$CatchTotal[Use,Ifleet,Year]) - sum(Stock[[Istock]]$CatchRetained[Use,Ifleet,Year])+1.0e-20
+        if (Stock[[Istock]]$Data$Discard.type[Ifleet]==3) Discard <- sum(Stock[[Istock]]$CatchTotalN[Use,Ifleet,Year]) - sum(Stock[[Istock]]$CatchRetainedN[Use,Ifleet,Year])+1.0e-20
+        if (Stock[[Istock]]$Data$Discard.type[Ifleet]==2) Discard <- Discard/(sum(Stock[[Istock]]$CatchTotal[Use,Ifleet,Year])+1.0e-20)
         IndexNo <- Stock[[Istock]]$Data$NdiscardData
         Stock[[Istock]]$Data$DiscardData[IndexNo,1:3] <<- c(Year+YrOffset,7,Ifleet)
         if (TestCase==F) Stock[[Istock]]$Data$DiscardData[IndexNo,4]   <<- Discard*exp(Stock[[Istock]]$Data$Discard.dev[IassArea,Year,Ifleet])+1.0e-20
@@ -108,7 +111,7 @@ DataGen <- function(Istock,Year,BioPreds)
           for (Iarea in Use)
           {
             if (Itype==1) Expected <- Expected + Stock[[Istock]]$CatchAtAgeRet[Iarea,Ifleet,,,Year]+1.0e-10
-            if (Itype==2) Expected <- Expected + Stock[[Istock]]$CatchAtAgeTot[Iarea,Ifleet,,,Year]-Stock[[Iarea,Istock]]$CatchAtAgeRet[Ifleet,,,Year]+1.0e-10
+            if (Itype==2) Expected <- Expected + Stock[[Istock]]$CatchAtAgeTot[Iarea,Ifleet,,,Year]-Stock[[Istock]]$CatchAtAgeRet[Ifleet,,,Year]+1.0e-10
             if (Itype==3) Expected <- Expected + Stock[[Istock]]$CatchAtAgeTot[Iarea,Ifleet,,,Year]+1.0e-10
           } 
           # Allow for ageing error
@@ -126,7 +129,7 @@ DataGen <- function(Istock,Year,BioPreds)
             set.seed(Stock[[Istock]]$Data$Age.seeds[IassArea,Itype,Year,Ifleet])
             Nsamp <- Stock[[Istock]]$Data$Age.spec[IassArea,Itype,Year,Ifleet]
             Observed <- as.vector(rmultinom(1,Nsamp,prob=Expected))
-            if (TestCase==T || Deter.Age.data == T) Observed <- Nsamp*Expected
+            if (TestCase==T || Deter.Age.data == T) Observed <- Nsamp*Expected/sum(Expected)
             if (Itype==1) Part <- 2; if (Itype==2) Part <- 1; if (Itype==3) Part <- 0;
             if (Nsex==1) Vec1 <- c(IassArea,Year+YrOffset,7,Ifleet,0,Part,1,-1,-1,Nsamp)
             if (Nsex==2) Vec1 <- c(IassArea,Year+YrOffset,7,Ifleet,3,Part,1,-1,-1,Nsamp)
@@ -161,7 +164,7 @@ DataGen <- function(Istock,Year,BioPreds)
             else
             {
               # Account for ageing error
-              set.seed(Stock[[Istock]]$Data$Age.seeds[IassArea,Itype,Year,Ifleet])
+              set.seed(Stock[[Istock]]$Data$CAA.seeds[IassArea,Itype,Year,Ifleet])
               NsampLength <- Stock[[Istock]]$Data$CAA.spec[IassArea,Itype,Year,Ifleet]/2
               LenSampleSize <- as.vector(rmultinom(1,NsampLength,prob=Expected))
               
@@ -169,17 +172,19 @@ DataGen <- function(Istock,Year,BioPreds)
               for (Ilen in 1:length(LenSampleSize))
                 if (LenSampleSize[Ilen] >= 1)
                 {
-                  if (Itype==1) Expected <- Stock[[Istock]]$CatchAtCAARet[Iarea,Ifleet,Isex,,Ilen,Year]+1.0e-10
-                  if (Itype==2) Expected <- Stock[[Istock]]$CatchAtCAATot[Iarea,Ifleet,Isex,,Ilen,Year]-Stock[[Istock]]$CatchAtCAARet[Iarea,Ifleet,Isex,,Ilen,Year]+1.0e-10
-                  if (Itype==3) Expected <- Stock[[Istock]]$CatchAtCAATot[Iarea,Ifleet,Isex,,Ilen,Year]+1.0e-10
+                  # FIX #35: sum over all biological areas in this assessment area (was the last Iarea only)
+                  SumUse <- function(A) colSums(matrix(A,nrow=length(Use)))
+                  if (Itype==1) Expected <- SumUse(Stock[[Istock]]$CatchAtCAARet[Use,Ifleet,Isex,,Ilen,Year])+1.0e-10
+                  if (Itype==2) Expected <- SumUse(Stock[[Istock]]$CatchAtCAATot[Use,Ifleet,Isex,,Ilen,Year])-SumUse(Stock[[Istock]]$CatchAtCAARet[Use,Ifleet,Isex,,Ilen,Year])+1.0e-10
+                  if (Itype==3) Expected <- SumUse(Stock[[Istock]]$CatchAtCAATot[Use,Ifleet,Isex,,Ilen,Year])+1.0e-10
                   Expected <- as.vector(Stock[[Istock]]$AgeErrorMatrix[1,,] %*% Expected)
                   if (sum(Expected)<=0) 
                     cat("Error-CAA2",Istock,Itype,Ifleet,Ilen,Year,"\n")
                   else
-                  {
+                   {
                     Nsamp <- LenSampleSize[Ilen]
                     Observed <- as.vector(rmultinom(1,Nsamp,prob=Expected))
-                    if (TestCase==T || Deter.Age.data==T) Observed <- Nsamp*Expected
+                    if (TestCase==T || Deter.Age.data==T) Observed <- Nsamp*Expected/sum(Expected)
                     if (Nsex==1) Vec1 <- c(IassArea,Year+YrOffset,7,Ifleet,0,Part,1,Ilen,Ilen,Nsamp)
                     if (Nsex==2) Vec1 <- c(IassArea,Year+YrOffset,7,Ifleet,Isex,Part,1,Ilen,Ilen,Nsamp)
                     if (Nsex==1) Vec1 <- c(Vec1,Observed)
@@ -238,7 +243,7 @@ DataGen <- function(Istock,Year,BioPreds)
           set.seed(Stock[[Istock]]$Data$Pred.age.seeds[Year,Ipred])
           Nsamp <- Stock[[Istock]]$Data$Pred.age.spec[Year,Ipred]
           Observed <- as.vector(rmultinom(1,Nsamp,prob=Expected))
-          if (TestCase==T || Deter.Age.data == T) Observed <- Nsamp*Expected
+          if (TestCase==T || Deter.Age.data == T) Observed <- Nsamp*Expected/sum(Expected)
           if (Nsex==1) Vec1 <- c(Year+YrOffset,7,General$Nfleet+Ipred,0,0,1,-1,-1,Nsamp)
           if (Nsex==2) Vec1 <- c(Year+YrOffset,7,General$Nfleet+Ipred,3,0,1,-1,-1,Nsamp)
           Vec1 <- c(Vec1,Observed)

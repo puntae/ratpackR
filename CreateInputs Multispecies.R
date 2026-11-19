@@ -261,6 +261,14 @@ do.process.OM <- function(OM.obj,Fleet.to.Metier,Nmetiers,FileName1,MetierNames,
    for (Ifleet in 1:nfleet.catch)
      Initial_F[Imet] <-  Initial_F[Imet] + OM.obj.org$Initial_F[SelOrig[Imet]]* Fleet.to.Metier[Ifleet,Imet]/sum(Fleet.to.Metier[Ifleet,]) 
    OM.obj$Initial_F <- Initial_F
+   
+   
+  Fleet.F.data <- matrix(0,nrow=nyears,ncol=Nmetiers.catch)
+  for (Imet in 1:Nmetiers.catch) 
+   for (Iyr in 1:nyears)
+    for (Ifleet in 1:nfleet.catch)
+      Fleet.F.data[Iyr,Imet] <-  Fleet.F.data[Iyr,Imet] + OM.obj.org$Fleet.F.data[Iyr,SelOrig[Imet]]*Fleet.to.Metier[Ifleet,Imet]/sum(Fleet.to.Metier[Ifleet,]) 
+  OM.obj$Fleet.F.data <- Fleet.F.data
   
   # Areas and fleets
   area.fleets <- matrix(0,nrow=nareas,ncol=Nmetiers)

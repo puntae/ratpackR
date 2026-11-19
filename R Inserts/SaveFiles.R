@@ -390,7 +390,7 @@ write.out.OM <- function(OM.obj,RunFolder2,Control.Rule.Type)
   write("\n# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n",RunFolder2,append=T)
   
   write("#Econ_parameters",RunFolder2,append=T)
-  for (Ifleet in 1:nfleet.catch)  write(paste0("1 1 1 1  # Fleet",Ifleet),RunFolder2,append=T)
+  for (Ifleet in 1:nfleet.catch)  write(paste0("1 1 1 1 1 # Fleet",Ifleet),RunFolder2,append=T)
   
   write("\n# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n",RunFolder2,append=T)
   write("#Use.Implementation.Err 0",RunFolder2,append=T)

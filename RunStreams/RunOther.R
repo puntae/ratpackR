@@ -27,7 +27,7 @@ Huge.sample.sizes <- F
 
 # 99 is actual
 FullOutput <- T
-Estimation.test <- 0                   #(0: Development; 1: Deterministic and no estimation ;2: Deterministic; 
+Estimation.test <- 99                   #(0: Development; 1: Deterministic and no estimation ;2: Deterministic; 
                                        #3: Deterministic (incl rec_devs); 5: Huge sample sizes and no estimation; 
                                        #99: Real )
 if (Estimation.test %in% c(1,2)) { Deter.Index.data <- T; Deter.Discard.data <- T; Deter.Length.data <- T; Deter.Age.data <- T }
@@ -46,7 +46,7 @@ Doall <- T
 #if (Doall) DoRun(GeneralFile="General_Herring.OM",RunNo="Herring") # NOK
 #if (Doall) DoRun(GeneralFile="General_SSageselemod2.OM",RunNo="SSageselemod2") # OK
 #if (Doall) DoRun(GeneralFile="General_Runze.OM",RunNo="Runze") # OK
-if (Doall) DoRun(GeneralFile="General_P.cod.OM",RunNo="P.cod") # OK
+#if (Doall) DoRun(GeneralFile="General_P.cod.OM",RunNo="P.cod") # OK
 #if (Doall) DoRun(GeneralFile="General_Bluespot_Pilbara.OM",RunNo="Bluespot_Pilbara") # OK
 #if (Doall) DoRun(GeneralFile="General_Red_Emperor_Kimberley.OM",RunNo="Red_Emperor_Kimberley") # NOK
 #if (Doall) DoRun(GeneralFile="General_Red_Emperor_Pilbara.OM",RunNo="Red_Emperor_Pilbara") # OK
@@ -61,7 +61,7 @@ if (Doall) DoRun(GeneralFile="General_P.cod.OM",RunNo="P.cod") # OK
 
 #if (Doall) DoRun(GeneralFile="General_Gummy.OM",RunNo="Gummy") # OK
 #if (Doall) DoRun(GeneralFile="General_Quillback.OM",RunNo="Quillback") # OK
-#if (Doall) DoRun(GeneralFile="General_Dusky.OM",RunNo="Dusky") # OK
+if (Doall) DoRun(GeneralFile="General_Dusky.OM",RunNo="Dusky") # OK
 #if (Doall) DoRun(GeneralFile="General_Goldband.OM",RunNo="Goldband") # OK
 #if (Doall) DoRun(GeneralFile="General_Snapper_Gascoyne.OM",RunNo="Snapper_Gascoyne") # OK
 #if (Doall) DoRun(GeneralFile="General_Snapper_North.OM",RunNo="Snapper_North") # OK

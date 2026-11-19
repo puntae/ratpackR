@@ -313,7 +313,7 @@ WriteProjFiles <- function(Isim,Istock,ProjSumSaveName,ProjSaveName,ProjSumAreaS
         Revenue    <- Stock[[Istock]]$Revenue[Iarea,Ifleet,Year]
         Cost <- Stock[[Istock]]$Cost[Iarea,Ifleet,Year]
         Profit <- Revenue - Cost
-        Outputs <- c(Stock[[Istock]]$Full[Iarea,Ifleet,Year],RetCatch,Discard,TotCatch,Revenue,Cost,Profit)
+        Outputs <- c(Stock[[Istock]]$FullF[Iarea,Ifleet,Year],RetCatch,Discard,TotCatch,Revenue,Cost,Profit)
         Totals <- Totals + Outputs
         VecOut0 <- c(VecOut0,Outputs)
        }
@@ -460,7 +460,7 @@ WriteInsurance <- function(Isim,Istock,FileName)
       VecOutI <- c(VecOutI,sum(Stock[[Istock]]$RBC[Year]),Stock[[Istock]]$TACsStep[5,Year],Stock[[Istock]]$TACs[Year],sum(Stock[[Istock]]$CatchRetained[,,Year]))
       VecOutI <- c(VecOutI,Stock[[Istock]]$SSB[Iarea,Year],Stock[[Istock]]$Depletion[Iarea,Year]*100,sum(Stock[[Istock]]$BREF[,Year]))    
       VecOutI <- c(VecOutI,Stock[[Istock]]$Mcat.Index[Year], Stock[[Istock]]$Prob.Collapse.Ins[Year])
-      Totals <- rep(0,35)
+      Totals <- rep(0,41)
       for (Ifleet in 1:General$Ncat_fleet)
        {
         Catch <- Stock[[Istock]]$CatchRetained[Iarea,Ifleet,Year]
