@@ -107,6 +107,7 @@ Do.plot.tst <- function(Species,Species2,Species3=NULL,OriginalName,OriginalPath
 
 # ========================================================================================================================
 
+<<<<<<< HEAD
 par(mfrow=c(2,1),oma=c(2,2,2,2),mar=c(5,4,2,1))
 # par(mfrow=c(2,2),oma=c(2,2,2,2),mar=c(5,4,2,7))
 
@@ -122,6 +123,17 @@ for (Ispec in   c(paste0("D",c(31)) ))
     
 
     #for (Ispec in c(paste0("E",c(1:4))) )
+=======
+par(mfrow=c(4,4),oma=c(2,2,2,2),mar=c(5,4,2,1))
+
+#for (Ispec in c("A1","A2","B1",paste0("C",c(1:11)),paste0("D",c(1:16)), paste0("E",c(1:2)), "F1" ) )
+#for (Ispec in c(paste0("C",c(1:11))) )
+#for (Ispec in c(paste0("D",c(6,19,28))) )
+for (Ispec in c(paste0("D",c(21))) )
+#for (Ispec in c(paste0("D",c(14,15,16,17))) )
+#for (Ispec in c(paste0("D",c(6,12,19,28)),paste0("C",c(1:11))) )
+#for (Ispec in c(paste0("E",c(1:4))) )
+>>>>>>> origin/main
  {
   Species <- NULL; Species3 <- NULL;UseSpec <- 1; Narea <- 1; NextraCat <- 0
   #if (Ispec=="A1") { Species <- "Tiger flathead"; OriginalName <- "Flathead_Tuned"; OriginalPath <- "Base Buffer Files/"; ResultsPath <- "Results/Tiger.flathead/"; TempPath <- "Temp/Assess_temp_Tiger.flathead/"  }

@@ -26,7 +26,7 @@ SetBuffer <- function(Istock,TACs)
     Time <- (Iyear-1) 
     T.Buffer <- 1.0-Time*Stock[[Istock]]$Ass$Stale.rate
     # Net buffer  
-    Buffer <- max(Stock[[Istock]]$Ass$Min.Buffer,T.Buffer)
+    Buffer <- max(Stock[[Istock]]$Ass$Min.Buffer,Buffer,T.Buffer)
     TACs[Iyear] <- TACs[Iyear]*Buffer
    }
  
@@ -75,8 +75,8 @@ PGMSY <- function(TACs,Iyear,Years=c(1,2))
         # Which stock do we use to link to this fleet
         Jstock <- General$PGMSY.Primary.Species.by.fleet[Ifleet]
         # There is no species linked to this species - just carry over the TAC
-        if (Jstock == 0) Revised.catch[Istock] <- Revised.catch[Istock] + sum(TACs[Istock,,Ifleet,YYEAR])
-        if (Jstock > 0)
+        if (Jstock == 0 || Catch.Comp[Ifleet,max(1,Jstock)] <= 0) Revised.catch[Istock] <- Revised.catch[Istock] + sum(TACs[Istock,,Ifleet,YYEAR])
+        if (Jstock > 0 && Catch.Comp[Ifleet,max(1,Jstock)] > 0) 
          {
           # Ratio of the TAC to the average catch
           Proportion <- sum(TACs[Jstock,,Ifleet,YYEAR])/Catch.Comp[Ifleet,Jstock]
@@ -195,8 +195,8 @@ HybridA <- function(Istock,Year,Cat.H,Initial.Eqn=F,Use.Profit.constraint="No")
   SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Year],dim=c(General$Nfleet,Nsex,MaxAge))
   SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Year],dim=c(General$Nfleet,Nsex,MaxAge))
   # Weird SS thing about initial conditions
-  if (Initial.Eqn==T) SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Stock[[1]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
-  if (Initial.Eqn==T) SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Stock[[1]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
+  if (Initial.Eqn==T) SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Stock[[Istock]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
+  if (Initial.Eqn==T) SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Stock[[Istock]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
 
   # Output of the routine
   Fout <- matrix(0,nrow=Narea,ncol=Ncat_fleet)
@@ -204,15 +204,15 @@ HybridA <- function(Istock,Year,Cat.H,Initial.Eqn=F,Use.Profit.constraint="No")
   # Allocate catch by fleet to catch by fleet and area
   Cat.H2 <- matrix(0,nrow=Narea,ncol=Ncat_fleet)
   for (Ifleet in 1:Ncat_fleet)
-   if (Cat.H[Ifleet]>0)
+   if (Cat.H[Ifleet]>1.0e-9)
     {
      # AEP - need to update for closed areas here
      Bvul <- rep(0,Narea)
      for (Iarea in 1:Narea) Bvul[Iarea] <- sum(N.H[Iarea,,]*Stock[[Istock]]$UseFleet[Iarea,Ifleet,Year]*SelRetWght.H[Ifleet,,])*Stock[[Istock]]$ClosedAreas[Iarea,Year]
-     Bvul <- Bvul/sum(Bvul)
+     if (sum(Bvul)>0) Bvul <- Bvul/sum(Bvul)
      Cat.H2[,Ifleet] <- Cat.H[Ifleet]*Bvul
-    }
-
+   }
+ 
   # Solve for F by area  
   for (Iarea in 1:Narea)
    {
@@ -276,8 +276,8 @@ Hybrid <- function(Istock,Year,Iarea,Cat.H2,Initial.Eqn=F)
  SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Year],dim=c(General$Nfleet,Nsex,MaxAge))
  SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Year],dim=c(General$Nfleet,Nsex,MaxAge))
  # Weird SS thing about initial conditions
- if (Initial.Eqn==T) SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Stock[[1]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
- if (Initial.Eqn==T) SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Stock[[1]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
+ if (Initial.Eqn==T) SelAge.H <- array(Stock[[Istock]]$SelAge[,,,Stock[[Istock]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
+ if (Initial.Eqn==T) SelRetWght.H <- array(Stock[[Istock]]$SelRetWghtAge[,,,Stock[[Istock]]$Nhist],dim=c(Nfleet,Nsex,MaxAge))
 
  # Set fully-selected fishing mortality
  Fout <- rep(0,Ncat_fleet)
@@ -383,6 +383,7 @@ Project.One.Ahead <- function(Istock,Iyear)
     # Set the SPR
     if (Stock[[Istock]]$MSY==2) Fout <- MeanF*Fmult*Outs$Ftar_SPR
     if (Stock[[Istock]]$MSY==3) Fout <- MeanF*Fmult*Outs$Ftar_SSB
+    if (!Stock[[Istock]]$MSY %in% c(2,3)) stop("#MSY in the .OM file must be 2 (F at SPR target) or 3 (F at SSB target); found ",Stock[[Istock]]$MSY)   
     
     # Storage for catches
     CatchTotalRBC <- 0
@@ -425,6 +426,7 @@ Project.One.Ahead <- function(Istock,Iyear)
 
   # Storage for catches
   CatchRetained <- matrix(0,nrow=Narea,Ncat_fleet); CatchTotal <- matrix(0,nrow=Narea,Ncat_fleet)
+  CatchRetainedN <- matrix(0,nrow=Narea,Ncat_fleet); CatchTotalN <- matrix(0,nrow=Narea,Ncat_fleet)
   
   # Loop over areas
   BioPreds <- matrix(0,nrow=Narea,ncol=Nfleet)
@@ -472,6 +474,8 @@ Project.One.Ahead <- function(Istock,Iyear)
          RawTotCatch[Isex,Iage,] <- Fval*RawTotalCatchN
          CatchRetained[Iarea,Ifleet] <- CatchRetained[Iarea,Ifleet] + Fval*Stock[[Istock]]$RetSelAge[Isex,Ifleet,Iage,Iyear]*sum(RawTotalCatchN*Stock[[Istock]]$RetSelLen[Isex,Ifleet,,Iyear]*Stock[[Istock]]$WtLen[Isex,])
          CatchTotal[Iarea,Ifleet] <- CatchTotal[Iarea,Ifleet] + Fval*sum(RawTotalCatchN*Stock[[Istock]]$WtLen[Isex,])
+         CatchRetainedN[Iarea,Ifleet] <- CatchRetainedN[Iarea,Ifleet] + Fval*Stock[[Istock]]$RetSelAge[Isex,Ifleet,Iage,Iyear]*sum(RawTotalCatchN*Stock[[Istock]]$RetSelLen[Isex,Ifleet,,Iyear])
+         CatchTotalN[Iarea,Ifleet] <- CatchTotalN[Iarea,Ifleet] + Fval*sum(RawTotalCatchN)
          Stock[[Istock]]$CatchAtAgeRet[Iarea,Ifleet,Isex,Iage,Iyear] <<- sum(RawTotalCatchN.Rel)
          Stock[[Istock]]$CatchAtAgeTot[Iarea,Ifleet,Isex,Iage,Iyear] <<- sum(RawTotalCatchN)
          Stock[[Istock]]$CatchAtCAARet[Iarea,Ifleet,Isex,Iage,,Iyear] <<- RawTotalCatchN.Rel
@@ -491,7 +495,10 @@ Project.One.Ahead <- function(Istock,Iyear)
     Stock[[Istock]]$CatchRetained[Iarea,,Iyear] <<- CatchRetained[Iarea,]
     Stock[[Istock]]$CatchTotal[Iarea,,Iyear] <<- CatchTotal[Iarea,]
     Stock[[Istock]]$CatchDiscard[Iarea,,Iyear] <<- CatchTotal[Iarea,] - CatchRetained[Iarea,]
-
+    Stock[[Istock]]$CatchRetainedN[Iarea,,Iyear] <<- CatchRetainedN[Iarea,]
+    Stock[[Istock]]$CatchTotalN[Iarea,,Iyear] <<- CatchTotalN[Iarea,]
+    Stock[[Istock]]$CatchDiscardN[Iarea,,Iyear] <<- CatchTotalN[Iarea,] - CatchRetainedN[Iarea,]
+    
     # Now handle surveys
     if (Nfleet > Ncat_fleet)
      for (Ifleet in (Ncat_fleet+1):Nfleet)
@@ -549,7 +556,7 @@ Project.One.Ahead <- function(Istock,Iyear)
       for (Isex in 1:Nsex)
        for (Iage in 1:MaxAge)
         if (Ifleet <= General$Ncat_fleet)    
-         BioPreds[Iarea,Ifleet] <- BioPreds[Iarea,Ifleet] +  Stock[[Istock]]$SelexAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$SelRetWghtAge[Ifleet,Isex,Iage,Iyear]*Stock[[Istock]]$N[Iarea,Isex,Iage,Iyear]*(1.0-exp(-Z[Isex,Iage]))/Z[Isex,Iage]
+         BioPreds[Iarea,Ifleet] <- BioPreds[Iarea,Ifleet] +  Stock[[Istock]]$SelRetWghtAge[Ifleet,Isex,Iage,Iyear]*Stock[[Istock]]$N[Iarea,Isex,Iage,Iyear]*(1.0-exp(-Z[Isex,Iage]))/Z[Isex,Iage]
         else
          BioPreds[Iarea,Ifleet] <- BioPreds[Iarea,Ifleet] +  Stock[[Istock]]$SelexAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$SelWghtAge[Ifleet,Isex,Iage,Iyear]*Stock[[Istock]]$N[Iarea,Isex,Iage,Iyear]*exp(-Z[Isex,Iage]/2)
       }
@@ -567,7 +574,7 @@ Project.One.Ahead <- function(Istock,Iyear)
       {
         Ntemp <- NtempZ[Iarea,Isex,Iage-1]
         for (Jarea in 1:Narea)
-          Stock[[Istock]]$N[Jarea,Isex,Iage,Iyear+1] <<- Stock[[Istock]]$N[Jarea,Isex,Iage,Iyear+1] + Stock[[Istock]]$Move[Iarea,Jarea,Iage]*Ntemp
+          Stock[[Istock]]$N[Jarea,Isex,Iage,Iyear+1] <<- Stock[[Istock]]$N[Jarea,Isex,Iage,Iyear+1] + Stock[[Istock]]$Move[Iarea,Jarea,Iage-1]*Ntemp
       } # Isex, Iage x Iarea
   
   # project forward (including a plus-group)
@@ -685,7 +692,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
       Ipnt <- 0
       for (Ifleet in 1:Ncat_fleet)
        for (Iarea in 1:Narea)
-        if (General$TACs.fleets[Ifleet]=="Yes")
+        if (General$Fleet.Search[Ifleet]=="Yes")
          { Ipnt <- Ipnt + 1; FullF[Iarea,Istock,Ifleet] <- LastEffort[Iarea,Istock,Ifleet]*Multipliers[Ipnt] }
         else
          FullF[Iarea,Istock,Ifleet] <- Stock[[Istock]]$AveF[Iarea,Ifleet]
@@ -740,7 +747,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
       if (ProjectTAC > TargetTAC) Obj1 <- Obj1 + General$Multispecies.Wght2*(ProjectTAC-TargetTAC)^4
       
       # Match the TAC (only key commericial species)
-      if (Nstocks==1 || General$PGMSY.Primary.Species[Istock]==0)
+      if (Nstocks==1 ||  General$Species.Hybrid[Istock]=="No")
        {
         Obj0 <- Obj0 + General$Multispecies.Wght1*(TargetTAC-ProjectTAC)^2
        }
@@ -759,7 +766,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
     General$Multi$Obj0[Jyear] <<- Obj0
     General$Multi$Obj1[Jyear] <<- Obj1
     General$Multi$Obj2[Jyear] <<- Obj2
-    General$Multi$Multipliers[Jyear,] <<- Multipliers
+    General$Multi$Multipliers[Jyear,1:length(Multipliers)] <<- Multipliers
     General$Multi$TargetTACs[Jyear,] <<- TargetTACs
     General$Multi$EstTACs[Jyear,] <<- EstTACs
     
@@ -778,7 +785,7 @@ Solve.for.multispecies.F <- function(Jyear,TACs)
     LastEffort[Iarea,Istock,Ifleet] <- Stock[[Istock]]$FullF[Iarea,Ifleet,Stock[[Istock]]$Nhist+Jyear-1]
  
   # Minimize
-  Neffort <- sum(General$TACs.fleets=="Yes")
+  Neffort <- sum(General$Fleet.Search=="Yes")
   Pars <- rep(-1,Narea*Neffort)
 
   ss <- nlminb(Pars,Minfun,control=list(eval.max=100))
@@ -833,7 +840,7 @@ SPR_ref <- function(Istock,Fmult=0,AveF,Iyear)
      {
        Ntemp <- Neqn[Iarea,Isex,Iage-1] * exp(-Z[Iarea,Isex,Iage-1])
        for (Jarea in 1:Narea)
-         Neqn[Iarea,Isex,Iage] <- Neqn[Iarea,Isex,Iage] + Stock[[Istock]]$Move[Iarea,Jarea,Iage-1]*Ntemp
+         Neqn[Jarea,Isex,Iage] <- Neqn[Jarea,Isex,Iage] + Stock[[Istock]]$Move[Iarea,Jarea,Iage-1]*Ntemp
      } # IAge x Iarea
    
    # Now for the plus-group
@@ -842,26 +849,29 @@ SPR_ref <- function(Istock,Fmult=0,AveF,Iyear)
    for (Iarea in 1:Narea)
     for (Jarea in 1:Narea) 
       Amove[Iarea,Jarea] <- Stock[[Istock]]$Move[Iarea,Jarea,MaxAge]* exp(-Z[Iarea,Isex,MaxAge])
+   # CHECK THIS ONE
+   Amove <- t(Amove) 
    Amove2 <- -1*Amove
    for (Iarea in 1:Narea) Amove2[Iarea,Iarea] <- 1 - Amove[Iarea,Iarea]
    
-   # Compute equilbrium
+   # Compute equilibrium
    Neqn[,Isex,MaxAge] <- as.vector(solve(Amove2) %*% VecIn)
    
    # Catch in weight
-   for (Iage in 1:MaxAge)
-    { 
-     NN <- Neqn[Iarea,Isex,Iage]*(1.0-exp(-Z[Iarea,Isex,Iage]))/Z[Iarea,Isex,Iage]
-     for (Ifleet in 1:Ncat_fleet)
-      {
-       # Total catch in numbers
-       CatchN <- FF[Iarea,Ifleet]*Stock[[Istock]]$SelexAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$FracLenM[Isex,Iage,Iyear,]*Stock[[Istock]]$SelSelLen[Isex,Ifleet,,Iyear]*NN 
-       # Catch in numbers by retained and total
-       CatchNF <- CatchN*Stock[[Istock]]$RetSelAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$RetSelLen[Isex,Ifleet,,Iyear]
-       Catch[Iarea] <- Catch[Iarea] + sum(CatchNF*Stock[[Istock]]$WtLen[Isex,])
-      } # Ifleet
-    } # Iage
-   } # Isex
+   for (Iarea in 1:Narea) 
+    for (Iage in 1:MaxAge)
+     { 
+      NN <- Neqn[Iarea,Isex,Iage]*(1.0-exp(-Z[Iarea,Isex,Iage]))/Z[Iarea,Isex,Iage]
+      for (Ifleet in 1:Ncat_fleet)
+       {
+        # Total catch in numbers
+        CatchN <- FF[Iarea,Ifleet]*Stock[[Istock]]$SelexAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$FracLenM[Isex,Iage,Iyear,]*Stock[[Istock]]$SelSelLen[Isex,Ifleet,,Iyear]*NN 
+        # Catch in numbers by retained and total
+        CatchNF <- CatchN*Stock[[Istock]]$RetSelAge[Isex,Ifleet,Iage,Iyear]*Stock[[Istock]]$RetSelLen[Isex,Ifleet,,Iyear]
+        Catch[Iarea] <- Catch[Iarea] + sum(CatchNF*Stock[[Istock]]$WtLen[Isex,])
+       } # Ifleet
+     } # Iage
+    } # Isex
  
   # Initial Spawning biomass-per-recruit
   for (Iarea in 1:Narea) SSBR[Iarea] <- sum(Neqn[Iarea,1,]*Stock[[Istock]]$Fecundity[,1])
@@ -872,7 +882,7 @@ SPR_ref <- function(Istock,Fmult=0,AveF,Iyear)
   Return.V$CatR <- sum(Catch)
   Return.V$Z <- Z
   return(Return.V)
-} # Get_initial
+} # SPR_ref
 
 # -------------------------------------------------------------------------------------------------------------------------
 
@@ -1143,18 +1153,18 @@ Do.Project <- function(Isim)
        Depl <- Stock[[Istock]]$Depletion[Iarea,1]
        Recr <- 4.0 *Stock[[Istock]]$R00[Iarea]*Stock[[Istock]]$Steep*Depl / ( (1-Stock[[Istock]]$Steep) + (5*Stock[[Istock]]$Steep-1)*Depl)
        # Adjust by early devs
-       if (Stock[[Istock]]$Early.R0.mult_end_yrs[1]!=0) 
-        for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1] <<- Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1]*exp(Stock[[Istock]]$Early.R0.mult+Stock[[Istock]]$EarlyDevs[1:MaxAge])
-       if (Stock[[Istock]]$Early.R0.mult_end_yrs[1]==0) 
-         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1] <<- Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1]*exp(Stock[[Istock]]$EarlyDevs[1:MaxAge])
+       if (Stock[[Istock]]$Early.R0.mult.end.yrs[1]!=0) 
+        for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1] <<- Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1]*exp(Stock[[Istock]]$Early.R0.mult+Stock[[Istock]]$EarlyDevs[Iarea,1:MaxAge])
+       if (Stock[[Istock]]$Early.R0.mult.end.yrs[1]==0) 
+         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1] <<- Stock[[Istock]]$N[Iarea,Isex,1:MaxAge,1]*exp(Stock[[Istock]]$EarlyDevs[Iarea,1:MaxAge])
        if (Stock[[Istock]]$Use_Steep_in_equ==0)
         {
-         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1,1] <<- Stock[[Istock]]$R0[1]*exp(Stock[[Istock]]$EarlyDevs[1])/Nsex
-         Stock[[Istock]]$Exp.Recr[Iarea,1] <<- Stock[[Istock]]$R0[1]
+         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1,1] <<- Stock[[Istock]]$R0[Iarea,1]*exp(Stock[[Istock]]$EarlyDevs[Iarea,1])/Nsex
+         Stock[[Istock]]$Exp.Recr[Iarea,1] <<- Stock[[Istock]]$R0[Iarea,1]
         }
        if (Stock[[Istock]]$Use_Steep_in_equ==1)
         {
-         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1,1] <<- Recr/Nsex*exp(Stock[[Istock]]$EarlyDevs[1])
+         for (Isex in 1:Nsex) Stock[[Istock]]$N[Iarea,Isex,1,1] <<- Recr/Nsex*exp(Stock[[Istock]]$EarlyDevs[Iarea,1])
          Stock[[Istock]]$Exp.Recr[Iarea,1] <<- Recr
         }
        # SSB does not include age=0
@@ -1300,18 +1310,18 @@ Do.Project <- function(Isim)
      }
 
     # Add implementation error
-    if(Stock[[Istock]]$Ass$TAC.management=="Yes")
-     for (Istock in 1:Nstocks)
+    for (Istock in 1:Nstocks)
+     if(Stock[[Istock]]$Ass$TAC.management=="Yes")
       if (Stock[[Istock]]$Use.Implementation.Error!=0)
        {
         if (Stock[[Istock]]$Implementation.Error.Specs[1]==1)
          for (IassArea in 1:Stock[[Istock]]$NassArea)
           TACs[Istock,IassArea,,1] <- TACs[Istock,IassArea,,1]*rbeta(1,Stock[[Istock]]$Implementation.Error.Specs[2],Stock[[Istock]]$Implementation.Error.Specs[3])
         Iyear <- Stock[[Istock]]$Nhist+Jyear
-        Stock[[Istock]]$TACsStep[6,Iyear] <<- Stock[[Istock]]$TACs[Iyear]
+        Stock[[Istock]]$TACsStep[6,Iyear] <<- sum(TACs[Istock,,,1])
        } # If
     
-    for(Istocks in 1:Nstocks)
+    for(Istock in 1:Nstocks)
      for (IassArea in 1:Stock[[Istock]]$NassArea)
        {
         Alloc.vals <- Stock[[Istock]]$Ass$Relallocation.vals+1.0e-10
@@ -1341,6 +1351,7 @@ Do.Project <- function(Isim)
          {
           print(TACs[Istock,,,1])
           TAC.mat <- matrix(TACs[Istock,,,1],nrow=Stock[[Istock]]$NassArea,ncol=Ncat_fleet,byrow=T)
+          TAC.mat <- matrix(TACs[Istock,1:Stock[[Istock]]$NassArea,,1],nrow=Stock[[Istock]]$NassArea,ncol=Ncat_fleet) 
           TheCat <- apply(TAC.mat,2,sum)
           Fout <- HybridA(Istock,Iyear,TheCat,Use.Profit.constraint=General$Use.Profit.constraint)
          }
@@ -1355,18 +1366,35 @@ Do.Project <- function(Isim)
     if (General$MultiStock.Version=="Yes")
      {
       if(Stock[[Istock]]$Ass$TAC.management=="No") {print("Not coded"); stopping}
-      TAC_mult <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+      
+      # Lets start with the species for which we can apply Hybrid
       for (Istock in 1:General$Nstocks)
-       for (Ifleet in 1:General$Ncat_fleet)
-        TAC_mult[Istock,Ifleet]<- sum(TACs[Istock,,Ifleet,1])
-      print("next step in multispecies")
-      FullFpass <- Solve.for.multispecies.F(Jyear,TAC_mult)
-      for (Istock in 1:General$Nstocks) 
-       for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) 
+       if (General$Species.Hybrid[Istock]=="Yes")
         {
          Iyear <- Stock[[Istock]]$Nhist+Jyear
-         Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- FullFpass[Iarea,Istock,Ifleet]
+         TAC.mat <- matrix(TACs[Istock,1:Stock[[Istock]]$NassArea,,1],nrow=Stock[[Istock]]$NassArea,ncol=Ncat_fleet)
+         TheCat <- apply(TAC.mat,2,sum)
+         Fout <- HybridA(Istock,Iyear,TheCat,Use.Profit.constraint=General$Use.Profit.constraint)
+         for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- Fout[Iarea,Ifleet]
+         General$Multi$TargetTACs[Jyear,Istock] <<- sum(TheCat)
         }
+        
+      # Only apply the non-linear minimization if there are actual technical interactions
+      if (any(General$Species.Hybrid == "No"))
+       {
+        TAC_mult <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+        for (Istock in 1:General$Nstocks)
+         for (Ifleet in 1:General$Ncat_fleet)
+          TAC_mult[Istock,Ifleet]<- sum(TACs[Istock,,Ifleet,1])
+        print("next step in multispecies")
+        FullFpass <- Solve.for.multispecies.F(Jyear,TAC_mult)
+        for (Istock in 1:General$Nstocks) 
+         for (Iarea in 1:Narea) for (Ifleet in 1:Ncat_fleet) 
+          {
+           Iyear <- Stock[[Istock]]$Nhist+Jyear
+           Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear] <<- FullFpass[Iarea,Istock,Ifleet]
+         }
+       } # if (any(General$Species.Hybrid == "No"))
      } # Solve for F by fleet and stock (depends on version of the code)
     
     # Save TACS
@@ -1378,6 +1406,13 @@ Do.Project <- function(Isim)
     
     # update the population dynamics
     for (Istock in 1:General$Nstocks) Project.One.Ahead(Istock,Stock[[Istock]]$Nhist+Jyear)
+    
+    # Save predicted catch for hybrid stocks
+    if (General$MultiStock.Version=="Yes")
+     for (Istock in 1:General$Nstocks)
+      if (General$Species.Hybrid[Istock]=="Yes")
+       General$Multi$EstTACs[Jyear,Istock] <<- sum(Stock[[Istock]]$CatchRetained[,,Stock[[Istock]]$Nhist+Jyear])
+    
   }
   #print(Stock[[1]]$SSB)
   #print(Stock[[1]]$SSB/Stock[[1]]$SSB0*100)
@@ -1692,11 +1727,45 @@ Read.General.File <- function(GeneralFile,RunNo)
 # ======================================================================================================================================
 # ======================================================================================================================================
 
+ReviewFsolver <- function()
+ {
+  
+  # Which species can be handled using the hybrid methods / which fleets are "in play"
+  Species.Hybrid <- rep("Yes",General$Nstocks)
+  Fleet.Search <- rep("No",General$Ncat_fleet)
+  
+  Species.Fleet.Catch <- matrix(0,nrow=General$Nstocks,ncol=General$Ncat_fleet)
+  for (Istock in 1:General$Nstocks)
+   for (Ifleet in 1:General$Ncat_fleet)  
+    {
+     if (Stock[[Istock]]$CatchType %in% c(1,2)) Species.Fleet.Catch[Istock,Ifleet] <- sum(Stock[[Istock]]$CatchInp[,Ifleet])
+     if (Stock[[Istock]]$CatchType %in% c(3)) Species.Fleet.Catch[Istock,Ifleet] <- sum(Stock[[Istock]]$F.Selex.Inp[,Ifleet])
+    }
+  print(Species.Fleet.Catch)
+  
+  for (Istock in 1:General$Nstocks)
+   if (General$PGMSY.Primary.Species[Istock] == 0)  
+    {
+      for (Ifleet in 1:General$Ncat_fleet)
+      if (Species.Fleet.Catch[Istock,Ifleet] >0 & sum(Species.Fleet.Catch[-Istock,Ifleet])>0) Species.Hybrid[Istock] <- "No"
+      if (Species.Hybrid[Istock] == "No") Fleet.Search[which(Species.Fleet.Catch[Istock,]>0)] <- "Yes"
+    }
+   else
+     Species.Hybrid[Istock] <- "NA"
+  
+  # Remove fleets that are not in play in the future
+  Fleet.Search[which(General$TACs.fleet=="No")] <- "No"
+  
+  General$Species.Hybrid <<- Species.Hybrid
+  General$Fleet.Search <<- Fleet.Search
+ }
+
+# ======================================================================================================================================
 DoRun <- function(GeneralFile,RunNo)
 {
   # Read the general file
   General <<- Read.General.File(GeneralFile,RunNo)
-  if (TestCase==T) General$Nsim <- 1
+  if (TestCase==T) General$Nsim <<- 1
   write("",file=DebugFile)
 
   # General the seeds
@@ -1721,11 +1790,16 @@ DoRun <- function(GeneralFile,RunNo)
       R0Save1[[Istock]]$Save1 <- Stock[[Istock]]$R00
       R0Save1[[Istock]]$Save2 <- Stock[[Istock]]$R00.orig
       R0Save1[[Istock]]$Save3 <- Stock[[Istock]]$R0
-     }
+    }
     print("Done read")
+    
+    # Now check whether we can use the single-species version of the methof to solve for F
+    if ( General$MultiStock.Version=="Yes") ReviewFsolver()
+    
+    # Save some output files
     for (Istock in 1:General$Nstocks) WriteBiol(Istock,General$BiolSaveName,General$FolderResults)
     for (Istock in 1:General$Nstocks) WriteLog(Isim,Istock,General$LogName)
-
+ 
     print("Solve for initial depletion")
     for (Istock in 1:General$Nstocks)
      if (!is.na(Stock[[Istock]]$Target.Depletion))

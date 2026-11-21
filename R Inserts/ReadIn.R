@@ -890,6 +890,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
     Index <- which(AllInput[,1]==paste0("#Selex:Age_Blocks_",addv)); CheckError(Index,"Age selectivity (blocks)")
     Index2 <- which(AllInput[,1]==paste0("#Selex:Age_Block.selex_",addv)); CheckError(Index2,"Age selectivity (blocks selex)")
     Ipnt <- 0
+
     for (Ifleet in 1:General$Nfleet)
      if (N.selex.blocks[Ifleet]>0)
       for (Iblk in 1:N.selex.blocks[Ifleet])  
@@ -898,7 +899,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
         Sel.yr1 <- as.numeric(AllInput[Index+Ipnt,1]); Sel.yr2 <- as.numeric(AllInput[Index+Ipnt,2]);
         if (Sel.yr2==Nhist) Sel.yr2 <- Nhist+General$Nproj+1
         Sels <-  as.numeric(AllInput[Index2+Ipnt,1:MaxAge]);
-        for (Iyr in Sel.yr1:Sel.yr2) SelAge[Ifleet,,Iyr] <- Sels
+        for (Iyr in Sel.yr1:Sel.yr2) SelAge[Isex,Ifleet,,Iyr] <- Sels
       }
    }
   
@@ -1005,7 +1006,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
   StockDetails$Early.R0.mult <- 0
   Index <- which(AllInput[,1]=="#Early_R0Mult"); StockDetails$Use.Early.R0.mult <- length(Index)
   if (length(Index)>0) StockDetails$Early.R0.mult <- as.numeric(AllInput[Index,2]);
-  StockDetails$Early.R0.mult_end_yrs <- c(0,0)
+  StockDetails$Early.R0.mult.end.yrs <- c(0,0)
   Index <- which(AllInput[,1]=="#Early_R0Mult_Block_end")
   if (length(Index)>0) StockDetails$Early.R0.mult.end.yrs <- as.numeric(AllInput[Index,2:3]);
   Index <- which(AllInput[,1]=="#Late_Devs")
@@ -1087,10 +1088,12 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
   StockDetails$CatchInp <- CatchInp
   StockDetails$Equilbrium.catch <- Equilbrium.catch
   F.Selex.Inp <- array(0,dim=c(Narea,General$Ncat_fleet,Nhist))
-  ## AEP FIX
-  #for (Ifleet in 1:General$Ncat_fleet)
-  # for (Iyear in 1:Nhist)
-  #  F.Selex.Inp[Open.fleets[Ifleet],Ifleet,Iyear] <- OM.obj$Fleet.F.data[Iyear,Ifleet] 
+
+  # Need to adjust this
+  if (exists("OM.obj") && !is.null(OM.obj$Fleet.F.data) && General$MultiStock.Version=="No")
+   for (Iarea in 1:Narea) for (Ifleet in 1:General$Ncat_fleet) for (Iyear in 1:Nhist)
+    F.Selex.Inp[Iarea,Ifleet,Iyear] <- OM.obj$Fleet.F.data[Iyear,Ifleet]*StockDetails$UseFleet[Iarea,Ifleet,Iyear]
+  StockDetails$F.Selex.Inp <- F.Selex.Inp
   StockDetails$F.Selex.Inp <- F.Selex.Inp
   if (FullOutput==T) cat("Done: Catch\n")
 
@@ -1245,8 +1248,8 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
         if ((Year-1) %% StockDetails$Data$Discard.freq.future[Ifleet] == 0) Discard.spec[IassArea,Year+Nhist,Ifleet] <- StockDetails$Data$Discard.cv.future[Ifleet]*CVMult 
    } # IassArea
   
-  # Generate the devs for discard discard
-  set.seed(Seed); NextSeed <- floor(runif(1,1,1000000))
+  # Generate the devs for discard data
+  set.seed(NextSeed); NextSeed <- floor(runif(1,1,1000000))
   Discard.devs <- array(-1,dim=c(NassArea,Nhist+General$Nproj+1,General$Nfleet))
   for (IassArea in 1:NassArea)
    for (Year in 1:(Nhist+General$Nproj+1))
@@ -1336,7 +1339,7 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
       Length.seeds[IassArea,Itype,Year,Ifleet] <- floor(runif(1,1,1000000))
   StockDetails$Data$Length.spec <- Length.spec
   StockDetails$Data$Length.seeds <- Length.seeds
-  StockDetails$Data$LengthData <- rep(0,6+Nsex*Nlen)
+  StockDetails$Data$LengthData <- rep(0,7+Nsex*Nlen)
   StockDetails$Data$NlengthData <- 0
   if (FullOutput==T) cat("Done: Length readin\n")
   
@@ -1656,28 +1659,28 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
    }
 
   # Bias in values for catch
-  Catch.Bias <- array(1,dim=c(NassArea,Nhist+General$Nproj+1,General$Nfleet))
+  Catch.Bias <- array(1,dim=c(NassArea,Nhist+General$Nproj+1,General$Ncat_fleet))
   Index <- which(AllInput[,1]=="#Catch:Base_Bias")
   if (length(Index) > 0)
-   for (Ifleet in 1:General$Nfleet)
+   for (Ifleet in 1:General$Ncat_fleet)
     {
      Index2 <- Index+Ifleet
-     Nbreak <- as.numeric(AllInput[Index+1,1])
-     Yr1 <- as.numeric(AllInput[Index+1,2])-StockDetails$YrOffset
-     YrN <- as.numeric(AllInput[Index+1,1+(Nbreak-1)*2+1])-StockDetails$YrOffset
-     if (YrN>General$Nproj+1) YrN <- Nhist+General$Nproj+1
-     for (Iyr in 1:Yr1)  Catch.Bias[,Iyr,Ifleet] <- as.numeric(AllInput[Index+1,3])
-     for (Iyr in YrN:(Nhist+General$Nproj+1))  Catch.Bias[,Iyr,Ifleet] <- as.numeric(AllInput[Index+1,1+Nbreak*2])
+     Nbreak <- as.numeric(AllInput[Index2+1,1])
+     Yr1 <- as.numeric(AllInput[Index2+1,2])-StockDetails$YrOffset
+     YrN <- as.numeric(AllInput[Index2+1,1+(Nbreak-1)*2+1])-StockDetails$YrOffset
+     if (YrN>Nhist+General$Nproj+1) YrN <- Nhist+General$Nproj+1
+     for (Iyr in 1:Yr1)  Catch.Bias[,Iyr,Ifleet] <- as.numeric(AllInput[Index2+1,3])
+     for (Iyr in YrN:(Nhist+General$Nproj+1))  Catch.Bias[,Iyr,Ifleet] <- as.numeric(AllInput[Index2+1,1+Nbreak*2])
      if (Nbreak >= 2)
       for (Ibreak in 1:(Nbreak-1))
        {
-        Yr1 <- as.numeric(AllInput[Index+1,1+(Ibreak-1)*2+1])-StockDetails$YrOffset
+        Yr1 <- as.numeric(AllInput[Index2+1,1+(Ibreak-1)*2+1])-StockDetails$YrOffset
         if (Yr1 > Nhist+General$Nproj+1) Yr1 <- Nhist+General$Nproj+1
-        V1 <- as.numeric(AllInput[Index+1,1+(Ibreak-1)*2+2])
-        Yr2 <- as.numeric(AllInput[Index+1,1+Ibreak*2+1])-StockDetails$YrOffset
+        V1 <- as.numeric(AllInput[Index2+1,1+(Ibreak-1)*2+2])
+        Yr2 <- as.numeric(AllInput[Index2+1,1+Ibreak*2+1])-StockDetails$YrOffset
         if (Yr1==Yr2) { print("Error in catch bias"); stop() }
         if (Yr2 > Nhist+General$Nproj+1) Yr2 <- Nhist+General$Nproj+1
-        V2 <- as.numeric(AllInput[Index+1,1+Ibreak*2+2])
+        V2 <- as.numeric(AllInput[Index2+1,1+Ibreak*2+2])
         for (Iyr in Yr1:Yr2) Catch.Bias[,Iyr,Ifleet] <- V1 +(V2-V1)*(Iyr-Yr1)/(Yr2-Yr1)  
        }  
     }
@@ -1779,6 +1782,9 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
   StockDetails$CatchRetained <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
   StockDetails$CatchTotal <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
   StockDetails$CatchDiscard <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
+  StockDetails$CatchRetainedN <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
+  StockDetails$CatchTotalN <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
+  StockDetails$CatchDiscardN <- array(NA,dim=c(General$Narea,General$Ncat_fleet,Nhist+General$Nproj+1))
   StockDetails$CatchAtLenRet <- array(NA,dim=c(General$Narea,General$Nfleet,Nsex,Nlen,Nhist+General$Nproj+1))
   StockDetails$CatchAtLenTot <- array(NA,dim=c(General$Narea,General$Nfleet,Nsex,Nlen,Nhist+General$Nproj+1))
   StockDetails$CatchAtAgeRet <- array(NA,dim=c(General$Narea,General$Nfleet,Nsex,MaxAge,Nhist+General$Nproj+1))
@@ -2190,6 +2196,13 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
     for (Ipred in 1:Num.Pred) Ass$Pred_Selex_par_phase[Ipred,]  <- as.numeric(AssInput[Index+Ipred,1:8])
    }
   
+  # Maximum F
+  Index <- which(AssInput[,1]=="#SS:Maximum_F"); 
+  if (length(Index)>0)
+   Ass$max_F  <- as.numeric(AssInput[Index,2])   
+  else
+   Ass$max_F <- StockDetails$max_F
+  
   # Tier 1 specifications
   Index <- which(AssInput[,1]=="#Tier_1:MSY");                                     Ass$MSY <- as.numeric(AssInput[Index,2])
   Index <- which(AssInput[,1]=="#Tier_1:SPR_target");                              Ass$SPR_target <- as.numeric(AssInput[Index,2])
@@ -2250,21 +2263,22 @@ SetSpec <- function(Isim,Istock,StockName,Seed)
   Index <- which(AssInput[,1]=="#Tier_5:Option");      
   if (Ass$Type == "Tier_5" & length(Index)>0)
    {
-    Ass$Tier5.Option <- as.numeric(AssInput[Index,2])
+    Ass$Tier5$Option <- as.numeric(AssInput[Index,2])
     Ass$TAC.management <- "No"
-    if (Ass$Tier5.Option %in% c(1,21)) 
+    if (Ass$Tier5$Option %in% c(1,21)) 
      {
       Index <- which(AssInput[,1]=="#Tier_5:Years");
-      Ass$Tier5.Years <-as.numeric(AssInput[Index,c(2,3)])
+      Ass$Tier5$Years <-as.numeric(AssInput[Index,c(2,3)])
     }
-    Ass$Tier5.Rebuilding <- F
+    Ass$Tier5$Rebuilding <- F
    }
   
   # Tier 6 specifications
-  if (Ass$Type == "Tier_6")
+  if (Ass$Type == "Tier_6a")
    {
     print("Caitlin is here") 
-    
+    Index <- which(AssInput[,1]=="#Tier_6a:Option"); 
+    Ass$Tier6a$Option <- as.numeric(AssInput[Index,2])
    }
   
   

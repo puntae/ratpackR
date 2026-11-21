@@ -71,8 +71,8 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   nlen <- length(model0$biology$Len_lo)
   nfleets <- dat$Nfleets
   catch.fleets <- which(dat$fleetinfo$type==1)
-  area.fleets <- dat$fleetinfo$area
   nfleet.catch <- max(catch.fleets)
+  area.fleets <- matrix(dat$fleetinfo$area,nrow=nareas,ncol=nfleets)
   
   OM.obj$styr <- styr
   OM.obj$endyr <- endyr
@@ -1274,6 +1274,7 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   sel.Phases <- matrix(0,nrow=nfleets,ncol=15)
   sel.pars <- matrix(0,nrow=nfleets,ncol=15)
   Nsel.pars <- rep(0,nfleets)
+  print(Nsel.pars)
   sel.blocks.no <- matrix(0,nrow=nfleets,ncol=15)
   sel.blocks.fn <- matrix(0,nrow=nfleets,ncol=15)
   sel.ann.devs.use <- matrix(0,nrow=nfleets,ncol=15)
@@ -1769,6 +1770,10 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   EM.obj$age.ret.dev.vals <- age.ret.dev.vals
   EM.obj$age.ret.dev.phs <- age.ret.dev.phs
   
+  # -----------------------------------------------------------------------------------------------------------------------------------
+  # Maximum F
+  EM.obj$maxF <- ctl$maxF
+  
   # -------------------------------------------------------------------------------------------------------------------
   
   cat("SAVING",RunFolder3a,"\n")
@@ -1799,11 +1804,13 @@ ncol.Cat <- length(ExtraCat[1,])
 #for (Ispec in paste0("C",c(6,8,9,10,11)))
 #for (Ispec in paste0("C",c(8,9)))
 #for (Ispec in paste0("C",c(9)))
+
 for (Ispec in paste0("D",c(31)))
 ##for (Ispec in paste0("D",c(12,19,21,28)))
 # for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
 
      {
+
   Analsis.Type <- -999;
   YearAdjust <- 0; AgeAdjust <- F; Reduce.Uncertain <- 0; Nproj <- 50; Control.Rule.Type <- "CSIRO"
   Project.Type <- 1; FakeAreas <- 0; FillProjection <- F

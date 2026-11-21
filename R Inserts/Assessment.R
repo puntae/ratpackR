@@ -452,7 +452,12 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
    {
     write("#_ #_Age_natmort_by sex x growthpattern",file=file.name,append=T)
     for (Isex in 1:Nsex)
-     write(Stock[[Istock]]$Mbase[Isex,],ncol=MaxAge,file=file.name,append=T)   
+     {
+      M.val <- Stock[[Istock]]$Mbase[Isex,1:MaxAge]
+      if (Ass$SS_M_Bias < 0)  M.val <- rep(-1*Ass$SS_M_Bias,MaxAge)
+      if (Ass$SS_M_Bias > 0)  M.val <-  M.val*(Ass$SS_M_Bias)
+      write(M.val,ncol=length( M.val),file=file.name,append=T)   
+     }
    }
   write("#",file=file.name,append=T)
   
@@ -690,7 +695,7 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
   TV <- rep(0,9); TV[1] <- Ass$SR_env_devs[1];  TV[8] <- Ass$SR_blocks[1]; TV[9] <- Ass$SR_block_fns[1]
   cat(Do_Jitter(Istock,1,log(sum(Stock[[Istock]]$R00.orig[Use]*Ass$SR_R0_mult)), Ass$SR_R0_Phase,    Bound_mult,Jitter_SD,0,TV=TV),"# SR_LN(R0)\n",file=file.name,append=T)
   TV <- rep(0,9); TV[1] <- Ass$SR_env_devs[2];  TV[8] <- Ass$SR_blocks[2]; TV[9] <- Ass$SR_block_fns[2]
-  Initial.val <- Ass$SR_Steep; if (Ass$SS_Steep_Bias < 0)  Initial.val <- -1*Ass$SS_Steep_Bias;
+  Initial.val <- Ass$SR_Steep*Ass$SS_Steep_Bias; if (Ass$SS_Steep_Bias < 0)  Initial.val <- -1*Ass$SS_Steep_Bias;
   cat(Do_Jitter(Istock,1,Initial.val,                  Ass$SR_Steep_Phase, Bound_mult,Jitter_SD,0,TV=TV),"# SR_BH_steep\n",file=file.name,append=T)
   TV <- rep(0,9); TV[1] <- Ass$SR_env_devs[3];  TV[8] <- Ass$SR_blocks[3]; TV[9] <- Ass$SR_block_fns[3]
   cat(Do_Jitter(Istock,1,Ass$SR_SigmaR,                 Ass$SR_SigmaR_Phase,Bound_mult,Jitter_SD,0,TV=TV),"# SR_sigmaR\n",file=file.name,append=T)
@@ -750,7 +755,7 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
   write("0.2 # F ballpark value in units of annual_F",file=file.name,append=T)
   write("-75 # F ballpark year (neg value to disable)",file=file.name,append=T)
   write("3 # F_Method:  1=Pope midseason rate; 2=F as parameter; 3=F as hybrid; 4=fleet-specific parm/hybrid (#4 is superset of #2 and #3 and is recommended)",file=file.name,append=T)
-  write("4 # max F (methods 2-4) or harvest fraction (method 1)",file=file.name,append=T)
+  cat(Ass$max_F," # max F (methods 2-4) or harvest fraction (method 1)\n",file=file.name,append=T)
   write("5  # N iterations for tuning in hybrid mode; recommend 3 (faster) to 5 (more precise if many fleets)",file=file.name,append=T)
   write("#",file=file.name,append=T)
   
@@ -1225,17 +1230,17 @@ Write_ctl <- function(Folder,Istock,Iarea,Year)
         Bias <- 1
         else 
           if (Iyear < Year+Ass$SS_end_yr_for_ramp+YrOffset)
-            Bias <- (Year+Ass$SS_last_yr_fullbias_adj+YrOffset- Iyr)/(Ass$SS_end_yr_for_ramp-Ass$SS_last_yr_fullbias_adj+YrOffset)
-         else
+            Bias <- (Year+Ass$SS_end_yr_for_ramp+YrOffset- Iyear)/(Ass$SS_end_yr_for_ramp-Ass$SS_last_yr_fullbias_adj)   
+          else
             Bias <- 0
-          #Bias <- Bias*Ass$SS_max_bias_adjust
-         if (Iyear < Year-Ass$SS_rec_dev_end+YrOffset)
-           Rec.dev.yr <- Stock[[Istock]]$Rec_devs[Iyr]+Bias*Stock[[Istock]]$SigmaR^2/2.0
-         else
-          Rec.dev.yr <- Stock[[Istock]]$Rec_devs[Iyr]
-         #cat(Iyr,Iyear,Bias,Bias*Stock[[Istock]]$SigmaR,Stock[[Istock]]$Rec_devs[Iyr],Rec.dev.yr,"\n")   
-         Recs.out <- c(Recs.out,Rec.dev.yr)
-     }
+     #Bias <- Bias*Ass$SS_max_bias_adjust
+     if (Iyear < Year-Ass$SS_rec_dev_end+YrOffset)
+      Rec.dev.yr <- Stock[[Istock]]$Rec_devs[Iyr]+Bias*Stock[[Istock]]$SigmaR^2/2.0
+     else
+      Rec.dev.yr <- Stock[[Istock]]$Rec_devs[Iyr]
+      #cat(Iyr,Iyear,Bias,Bias*Stock[[Istock]]$SigmaR,Stock[[Istock]]$Rec_devs[Iyr],Rec.dev.yr,"\n")   
+     Recs.out <- c(Recs.out,Rec.dev.yr)
+   } # Iyr
   cat(Recs.out,"\n",file=file.name,append=T)
 
   write("# Fcast_recruitments:",file=file.name,append=T)
@@ -1342,7 +1347,7 @@ Write_forecast <- function(Folder,Istock,Year)
   
   file.name <- paste0(Folder,"forecast.ss")
   #print(file.name)
-  write(paste0("# forecast.ss for",Folder,"\n"),file=file.name,append=T)
+  write(paste0("# forecast.ss for",Folder,"\n"),file=file.name)
   
   write("# for all year entries except rebuilder; enter either: actual year, -999 for styr, 0 for endyr, neg number for rel. endyr",file=file.name,append=T)
   write("1 # Benchmarks: 0=skip; 1=calc F_spr,F_btgt,F_msy; 2=calc F_spr,F0.1,F_msy; 3=add F_Blimit; ",file=file.name,append=T)
@@ -1397,7 +1402,7 @@ Write_forecast <- function(Folder,Istock,Year)
   write("1 # Value multiplier is ignored",file=file.name,append=T)
   write("0 # not used",file=file.name,append=T)
   write("#",file=file.name,append=T)
-  write("2019  # FirstYear for caps and allocations (should be after years with fixed inputs) ",file=file.name,append=T)
+  write(paste0(Year+Stock[[Istock]]$YrOffset+1,"  # FirstYear for caps and allocations (should be after years with fixed inputs) "),file=file.name,append=T)   # FIX #39: was hard-coded 2019
   write("0 # stddev of log(realized catch/target catch) in forecast (set value>0.0 to cause active impl_error)",file=file.name,append=T)
   write("0 # Do West Coast gfish rebuilder output: 0=no; 1=yes ",file=file.name,append=T)
   write("0 # Rebuilder:  first year catch could have been set to zero (Ydecl)(-1 to set to 1999)",file=file.name,append=T)
@@ -1493,9 +1498,11 @@ Do.Insurance <- function(Isim,Istock,Year)
   Recdevs <- modeloutput$recruit$raw_dev[Index+c(-1*(Years.for.sampling-1):0)]
   Index <- which(modeloutput$Natural_Mortality$Y==endyr)
   Mdevs <- log(modeloutput$Natural_Mortality$'0'[Index+c(-1*(Years.for.sampling-1):0)]/Proj$baseM)
+  Mdevs2 <- log(modeloutput$Natural_Mortality$'0'/Proj$baseM)
 
   # Spawning biomass-per-recruit
   sprf0 <- SPR(Proj,0.0)
+  # AEP - NEED TO FIX AT SOME STAGE
   Ftarget <- Get_SPR(Proj,0.41)
   Proj$sprf0 <- sprf0
   Proj$SSB0 <- R0* sprf0
@@ -1535,6 +1542,8 @@ Do.Insurance <- function(Isim,Istock,Year)
   
   # Now project (Random rec devs and pessimistic Mdevs)
   Ms <- Mdevs[which(Mdevs>0.2)]
+  # AEP
+  Ms <- Mdevs2[which(Mdevs2>0.2)]
   for (Isim in 1:Proj$Nsim)
    if (length(Ms)>0) Proj$MDevs[,Isim] <- sample(Ms,Proj$Nyear+1,replace=T) else Proj$MDevs[,Isim] <- 0
   ProjOut2 <- Project(Proj)
@@ -1597,7 +1606,7 @@ Do.Insurance <- function(Isim,Istock,Year)
       # Base insurance
       if (Insurance.type==2)
        {
-        NetLoss <- ThreshProfit-TotalLoss1a[Ifleet]
+       NetLoss <- ThreshProfit-TotalLoss1a[Ifleet]
         if (NetLoss > 0 & ProbCME <= Delta) 
          {
           Insurance.Bought <- max(0,NetLoss/(1-CostOfInsurance))
@@ -1619,13 +1628,63 @@ Do.Insurance <- function(Isim,Istock,Year)
       # Loss with a CME compared to no CMEs (Jack)
       if (Insurance.type==4)
        {
-        NetLoss <- ThreshProfit-TotalLoss2a[Ifleet]
-        if (NetLoss > 0 & ProbCME <= Delta) 
+        Utility <- function(x,a=0.25) { (x^(1-a)-1)/(1-a) }
+        IUtility <- function(z,a=0.25) { ((1-a)*z+1)^(1/(1-a)) }
+        
+        InsuranceDemand <- function(r,a=0.25,P=ProbCME,G=Good,L=Loss){
+          Ratio <- (P*(1-r))/((1-P)*r)
+          #print(Ratio)
+          Numer <- L - (1-Ratio^(1/a))*G
+          Denom <- 1 - (1-Ratio^(1/a))*r
+          Numer/Denom
+        }
+        
+        Risk.Premium <- function(ProbCME, Good, Loss, a)
          {
-          Insurance.Bought <- max(0,NetLoss/(1-CostOfInsurance))
-          Stock[[Istock]]$Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought
-          Stock[[Istock]]$Cost.Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought*CostOfInsurance
+          Exp.Inc <- Good - Loss*ProbCME
+          Exp.Util <- ProbCME*Utility(Good-Loss,a)+(1-ProbCME)*Utility(Good,a)
+          CE.income <- IUtility(Exp.Util,a)
+          return(Exp.Inc - CE.income)
          }
+        
+        #TotalLoss0a[Ifleet] <- 11.5283661000642
+        #TotalLoss2a[Ifleet] <- 8.03184183453443
+        #ProbCME <- 0.1
+        Good <- TotalLoss0a[Ifleet]
+        Loss <- TotalLoss0a[Ifleet]-TotalLoss2a[Ifleet]
+ 
+        
+        #Good <- 120
+        #Loss <- 100
+        #ProbCME <- 0.5
+        ProbCME.use <- 0.25
+        a <- 0.25
+        a <- 3
+        
+        # Risk premium (not used)
+        Risk.P <- Risk.Premium(ProbCME.use,Good,Loss,a)
+
+        #Case 1: Fully insured with r=ProbCME and Insurance.Bought = Loss
+        #r <- ProbCME
+        #Insurance.Bought <- InsuranceDemand(r,a,P=ProbCME,G=Good,L=Loss)
+
+        #Case 2: Underinsured with r>ProbCME and Insurance.Bought < Loss
+        r <- 1.1*ProbCME.use
+        Insurance.Bought <- InsuranceDemand(r,a, P=ProbCME.use, G=Good, L=Loss)
+
+        #Case 3: Overinsured with r<ProbCME and Insurance.Bought > Loss
+        #r <- 0.9*ProbCME
+        #Insurance.Bought <- InsuranceDemand(r,a,P=ProbCME,G=Good,L=Loss)
+        #print(Insurance.Bought)
+        
+        if (Loss == 0) Insurance.Bought <- 0
+          
+        
+        Stock[[Istock]]$Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- Insurance.Bought
+        Stock[[Istock]]$Cost.Insurance.Bought.Fish[Insurance.type,Ifleet,Year+1] <<- r*Insurance.Bought
+        print(c(Good,Loss,ProbCME,ProbCME.use,r,Insurance.Bought,r*Insurance.Bought))
+        #AA
+          #AAA
        }
       # With prediction of CME
       if (Insurance.type %in% c(5,8,9))
@@ -1757,7 +1816,7 @@ Run_Tier1a <- function(Isim,Istock,Iarea,Year)
   if (Stock[[Istock]]$Ass$Has.insurance) Do.Insurance(Isim,Istock,Year)
 
   # Set the TAC to zero if there was a MHW
-  if (Stock[[Istock]]$Ass$Close.in.MHW == "Yes" & Stock[[Istock]]$Mcat.Index[Year+1]==1) Stock[[Istock]]$TheTACs[1] <- 0
+  if (Stock[[Istock]]$Ass$Close.in.MHW == "Yes" & Stock[[Istock]]$Mcat.Index[Year+1]==1) Stock[[Istock]]$TheTACs[1] <<- 0
   #print(Stock[[Istock]]$TheTACs)
   
   # Final output
@@ -1781,11 +1840,11 @@ Run_Tier1a <- function(Isim,Istock,Iarea,Year)
   file.remove("ParmTrace.sso")
   file.remove("runnumber.ss")
   file.remove("ss3.bar")
-  if (file.exists("ss3.b01")) file.remove("ss3.b01",showWarnings=F)
-  if (file.exists("ss3.b02")) file.remove("ss3.b02",showWarnings=F)
-  if (file.exists("ss3.b03")) file.remove("ss3.b03",showWarnings=F)
+  if (file.exists("ss3.b01")) file.remove("ss3.b01")
+  if (file.exists("ss3.b02")) file.remove("ss3.b02")
+  if (file.exists("ss3.b03")) file.remove("ss3.b03")
 
-  if (!Estimation.test %in% c(99) & (Stock[[Istock]]$Ass$Clean.up=="Default" || Stock[[Istock]]$Ass$Clean.up=="Full"))
+  if (Estimation.test %in% c(99) & (Stock[[Istock]]$Ass$Clean.up=="Default" || Stock[[Istock]]$Ass$Clean.up=="Full"))
    {
     file.remove("SS.exe")
     file.remove("echoinput.sso")
@@ -1795,12 +1854,12 @@ Run_Tier1a <- function(Isim,Istock,Iarea,Year)
     file.remove("covar.sso")
     file.remove("ss3.par")
     file.remove("ss3.rep")
-    if (file.exists("ss3.p01")) file.remove("ss3.p01",showWarnings=F)
-    if (file.exists("ss3.r01")) file.remove("ss3.r01",showWarnings=F)
-    if (file.exists("ss3.p02")) file.remove("ss3.p02",showWarnings=F)
-    if (file.exists("ss3.r02")) file.remove("ss3.r02",showWarnings=F)
-    if (file.exists("ss3.p03")) file.remove("ss3.p03",showWarnings=F)
-    if (file.exists("ss3.r03")) file.remove("ss3.r03",showWarnings=F)
+    if (file.exists("ss3.p01")) file.remove("ss3.p01")
+    if (file.exists("ss3.r01")) file.remove("ss3.r01")
+    if (file.exists("ss3.p02")) file.remove("ss3.p02")
+    if (file.exists("ss3.r02")) file.remove("ss3.r02")
+    if (file.exists("ss3.p03")) file.remove("ss3.p03")
+    if (file.exists("ss3.r03")) file.remove("ss3.r03")
    }
   if (Stock[[Istock]]$Ass$Clean.up=="Full")
    {
@@ -1861,7 +1920,7 @@ f2 <- function(parms,data) {
     B[t+1] <- B[t+1]*exp(Rec_dev[t]*SigmaR-SigmaR*SigmaR/2.0);
     if (IsDymB0==1)
     {
-      B0[t+1] <- B0(t) + r*B0[t]*(1-(B0[t]/k)^z);
+      B0[t+1] <- B0[t] + r*B0[t]*(1-(B0[t]/k)^z);
       B0[t+1] <- B0[t+1]*exp(Rec_dev[t]*SigmaR-SigmaR*SigmaR/2.0);
     }
     else
@@ -2067,7 +2126,7 @@ Run_Tier4a<- function(Isim,Istock,Year,Plot=T)
   
   if (EstR=="No"  & EstZ=="No" ) map <- list(logz=factor(NA),logR=factor(NA))
   if (EstR=="Yes" & EstZ=="No" ) map <- list(logz=factor(NA))
-  if (EstR=="No"  & EstZ=="Yes") map <- list(logr=factor(NA))
+  if (EstR=="No"  & EstZ=="Yes") map <- list(logR=factor(NA))
   if (EstR=="Yes" & EstZ=="Yes") map <- NULL
   if (ProcessError==0) map <- c(map,list(logSigmaR=factor(NA),Rec_dev=rep(factor(NA),length(parameters$Rec_dev))))
   if (ProcessError==1) map <- c(map,list(logSigmaR=factor(NA)))
@@ -2172,7 +2231,7 @@ Run_Tier4b<- function(Isim,Istock,Year)
   Max.catch <- Stock[[Istock]]$Ass$Tier4b$Max.catch
   
   # Calculate the RBC
-  if (CpueAvg  <= Stock[[Istock]]$Ass$Tier4b$Cpue_lim)
+  if (CpueAvg  <= Cpue_limit)
     mult <- 0.0
   else
     mult <- (CpueAvg-Cpue.limit)/(Cpue.target-Cpue.limit);
@@ -2188,7 +2247,7 @@ Run_Tier4b<- function(Isim,Istock,Year)
 
 Run_Tier5<- function(Isim,Istock,Year,Plot=T)
 {
-  Option <- Stock[[Istock]]$Ass$Tier5.Option
+  Option <- Stock[[Istock]]$Ass$Tier5$Option
   #cat("Running Tier 4",Isim,Istock,Year,Option,"\n")
   
   Narea <- General$Narea
@@ -2202,7 +2261,7 @@ Run_Tier5<- function(Isim,Istock,Year,Plot=T)
     for (Ifleet in 1:Ncat_fleet)
     {
       Icnt <- 0
-      for (Iyear in Stock[[Istock]]$Ass$Tier5.Years[1]:Stock[[Istock]]$Ass$Tier5.Years[2]-Stock[[Istock]]$YrOffset)  
+      for (Iyear in Stock[[Istock]]$Ass$Tier5$Years[1]:Stock[[Istock]]$Ass$Tier5$Years[2]-Stock[[Istock]]$YrOffset)  
       { MeanF[Iarea,Ifleet] <- MeanF[Iarea,Ifleet] + Stock[[Istock]]$FullF[Iarea,Ifleet,Iyear]; Icnt <- Icnt + 1 }
       MeanF[Iarea,Ifleet] <- MeanF[Iarea,Ifleet]  / Icnt
     }
@@ -2259,9 +2318,9 @@ Run_Tier5<- function(Isim,Istock,Year,Plot=T)
     BMSY_prox <- 0.4; FMSY_prox <- 0.4
     Alpha <- 0.05*BMSY_prox
     Close.Thresh <- 0.25
-    if (Depl < Close.Thresh) Stock[[Istock]]$Ass$Tier5.Rebuilding <<- T
-    if (Depl > BMSY_prox) Stock[[Istock]]$Ass$Tier5.Rebuilding <<- F
-    if (Stock[[Istock]]$Ass$Tier5.Rebuilding == F) Alpha <- 0.3*BMSY_prox
+    if (Depl < Close.Thresh) Stock[[Istock]]$Ass$Tier5$Rebuilding <<- T
+    if (Depl > BMSY_prox) Stock[[Istock]]$Ass$Tier5$Rebuilding <<- F
+    if (Stock[[Istock]]$Ass$Tier5$Rebuilding == F) Alpha <- 0.3*BMSY_prox
     
     # Apply the HCR to get the Fmultipler
     if (Depl < Close.Thresh)

@@ -26,7 +26,7 @@ Huge.sample.sizes <- F
 
 # 99 is actual
 FullOutput <- T
-Estimation.test <- 99                   #(0: Development; 1: Deterministic and no estimation ;2: Deterministic; 
+Estimation.test <- 0                   #(0: Development; 1: Deterministic and no estimation ;2: Deterministic; 
                                        #3: Deterministic (incl rec_devs); 5: Huge sample sizes and no estimation; 
                                        #99: Real )
 

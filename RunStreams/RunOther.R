@@ -48,23 +48,26 @@ Doall <- T
 # if (Doall) DoRun(GeneralFile="General_Herring.OM",RunNo="Herring") # NOK
 #if (Doall) DoRun(GeneralFile="General_SSageselemod2.OM",RunNo="SSageselemod2") # OK
 #if (Doall) DoRun(GeneralFile="General_Runze.OM",RunNo="Runze") # OK
-# if (Doall) DoRun(GeneralFile="General_P.cod.OM",RunNo="P.cod") # OK
-# if (Doall) DoRun(GeneralFile="General_Bluespot_Pilbara.OM",RunNo="Bluespot_Pilbara") # OK
-# if (Doall) DoRun(GeneralFile="General_Red_Emperor_Kimberley.OM",RunNo="Red_Emperor_Kimberley") # NOK
-# if (Doall) DoRun(GeneralFile="General_Red_Emperor_Pilbara.OM",RunNo="Red_Emperor_Pilbara") # OK
-# if (Doall) DoRun(GeneralFile="General_SandySprat.OM",RunNo="SandySprat") # OK
-# if (Doall) DoRun(GeneralFile="General_WA_Dhufish.OM",RunNo="WA_Dhufish") # OK
-# if (Doall) DoRun(GeneralFile="General_Sandbar_Shark.OM",RunNo="Sandbar_Shark") # NOK
+
+#if (Doall) DoRun(GeneralFile="General_P.cod.OM",RunNo="P.cod") # OK
+#if (Doall) DoRun(GeneralFile="General_Bluespot_Pilbara.OM",RunNo="Bluespot_Pilbara") # OK
+#if (Doall) DoRun(GeneralFile="General_Red_Emperor_Kimberley.OM",RunNo="Red_Emperor_Kimberley") # NOK
+#if (Doall) DoRun(GeneralFile="General_Red_Emperor_Pilbara.OM",RunNo="Red_Emperor_Pilbara") # OK
+#if (Doall) DoRun(GeneralFile="General_SandySprat.OM",RunNo="SandySprat") # OK
+#if (Doall) DoRun(GeneralFile="General_WA_Dhufish.OM",RunNo="WA_Dhufish") # OK
+#if (Doall) DoRun(GeneralFile="General_Sandbar_Shark.OM",RunNo="Sandbar_Shark") # NOK
+
 #if (Doall) DoRun(GeneralFile="General_Sandbar_Shark2.OM",RunNo="Sandbar_Shark2") # NOK
 #if (Doall) DoRun(GeneralFile="General_Sardine.OM",RunNo="Sardine") # NOK
 #if (Doall) DoRun(GeneralFile="General_Mackerel.OM",RunNo="Mackerel") # NOK
 #if (Doall) DoRun(GeneralFile="General_Anchovy.OM",RunNo="Anchovy") # NOK
 #if (Doall) DoRun(GeneralFile="General_Squid.OM",RunNo="Squid") # NOK
-
 #if (Doall) DoRun(GeneralFile="General_Gummy.OM",RunNo="Gummy") # OK
+
 # if (Doall) DoRun(GeneralFile="General_Quillback.OM",RunNo="Quillback") # OK
 # if (Doall) DoRun(GeneralFile="General_Dusky.OM",RunNo="Dusky") # OK
 # if (Doall) DoRun(GeneralFile="General_Goldband.OM",RunNo="Goldband") # OK
+
 #if (Doall) DoRun(GeneralFile="General_Snapper_Gascoyne.OM",RunNo="Snapper_Gascoyne") # OK
 #if (Doall) DoRun(GeneralFile="General_Snapper_North.OM",RunNo="Snapper_North") # OK
 #if (Doall) DoRun(GeneralFile="General_WCDSC.OM",RunNo="WCDSC") # OK
