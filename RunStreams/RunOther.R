@@ -9,8 +9,8 @@ library(RTMB)
 library(RcppArmadillo)
 library(Rcpp)
 
-source("RatPackR.r")
-# source("R inserts/Run_Parallel_Wrapper.r")
+# source("RatPackR.r")
+source("R inserts/Run_Parallel_Wrapper.r")
 
 # =========================================================================================================================
 # =========================================================================================================================
@@ -80,5 +80,11 @@ Doall <- T
 
 # if (Doall) DoRun(GeneralFile="General_Dusky_shark.OM",RunNo="Dusky_shark") # OK
 # if (Doall) DoRun(GeneralFile="General_Gummy_shark.OM",RunNo="Gummy_shark") # OK
-if (Doall) DoRun(GeneralFile="General_Sandbar_Shark.OM",RunNo="Sandbar_Shark") # OK
+# if (Doall) DoRun(GeneralFile="General_Sandbar_Shark.OM",RunNo="Sandbar_Shark") # OK
 # if (Doall) DoRun(GeneralFile="General_Whiskery_Shark.OM",RunNo="Whiskery_Shark") # OK
+
+# if (Doall) DoRun(GeneralFile="General_WA_Dhufish_2025.OM",RunNo="WA_Dhufish_2025") # NOT OK
+# if (Doall) DoRun(GeneralFile="General_WA_Dhufish_Fake2A.OM",RunNo="WA_Dhufish_Fake2A") # OK
+
+if (Doall) DoRun(GeneralFile="General_WA_Dhufish_Fake2A_80.OM",RunNo="WA_Dhufish_Fake2A_80")
+if (Doall) DoRun(GeneralFile="General_WA_Dhufish_Fake2A_90.OM",RunNo="WA_Dhufish_Fake2A_90")

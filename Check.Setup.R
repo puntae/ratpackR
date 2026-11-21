@@ -76,15 +76,31 @@ Do.plot.tst <- function(Species,Species2,Species3=NULL,OriginalName,OriginalPath
     Est <- Est[1:nyear1]
 
     # Now do plots
-    #print(Original)
-    #print(True)
+    print(Original)
+    print(True)
     ymax <- max(Original,True,Est)
     plot(years,True,col="green",ylim=c(0,ymax*1.1),yaxs="i",xaxs="i",lwd=2,type="l")
     if (ShowEM==T) lines(years,Est,col="red",lwd=2)
     if (add[Iyrs]==0) lines(years,Original,col="blue",lwd=2)
     text(styr+(nyears-1)*0.025,ymax*0.1,Species,adj=0,cex=1.2)
-    if (Iyrs==1) legend("topright",legend=c("Original","OM","EM"),col=c("blue","green","red"),lty=1,lwd=2)
-    if (Iyrs>1) legend("topright",legend=c("OM","EM"),col=c("green","red"),lty=1,lwd=2)
+    if (Iyrs==1) legend("topright",legend=c("Original","OM","EM"),col=c("blue","green","red"),lty=1,lwd=1)
+    if (Iyrs>1) legend("topright",legend=c("OM","EM"),col=c("green","red"),lty=1,lwd=1)
+    
+    
+    # ymax <- max(Original,True,Est)
+    # plot(years,True,col="green",ylim=c(0,ymax*1.1),yaxs="i",xaxs="i",lwd=2,type="l")
+    # if (ShowEM==T) lines(years,Est,col="red",lwd=2)
+    # if (add[Iyrs]==0) lines(years,Original,col="blue",lwd=2)
+    # text(styr+(nyears-1)*0.025,ymax*0.1,Species,adj=0,cex=1.2)
+    # 
+    # if (Iyrs==1) {
+    #   legend("topright", inset=c(-0.25, 0), legend=c("Original","OM","EM"), 
+    #          col=c("blue","green","red"), lty=1, lwd=2, bty="n", xpd=NA)
+    # }
+    # if (Iyrs>1) {
+    #   legend("topright", inset=c(-0.25, 0), legend=c("OM","EM"), 
+    #          col=c("green","red"), lty=1, lwd=2, bty="n", xpd=NA)
+    # }
   }
   
 }
@@ -92,6 +108,7 @@ Do.plot.tst <- function(Species,Species2,Species3=NULL,OriginalName,OriginalPath
 # ========================================================================================================================
 
 par(mfrow=c(2,1),oma=c(2,2,2,2),mar=c(5,4,2,1))
+# par(mfrow=c(2,2),oma=c(2,2,2,2),mar=c(5,4,2,7))
 
 #for (Ispec in c("A1","A2","B1",paste0("C",c(1:11)),paste0("D",c(1:16)), paste0("E",c(1:2)), "F1" ) )
 # for (Ispec in c(paste0("C",c(1:11))) )
@@ -99,7 +116,9 @@ par(mfrow=c(2,1),oma=c(2,2,2,2),mar=c(5,4,2,1))
 # for (Ispec in c(paste0("D",c(11))) )
 #for (Ispec in c(paste0("D",c(6,12,19,28)),paste0("C",c(1:11))) )
 # for (Ispec in   c(paste0("D",c(6:12, 20, 22, 28)) ))
-  for (Ispec in   c(paste0("D",c(28)) ))
+  # for (Ispec in   c(paste0("D",c(11,32)) ))
+
+for (Ispec in   c(paste0("D",c(31)) ))
     
 
     #for (Ispec in c(paste0("E",c(1:4))) )
@@ -151,7 +170,9 @@ par(mfrow=c(2,1),oma=c(2,2,2,2),mar=c(5,4,2,1))
   if (Ispec=="D28") { Species <- "Whiskery_Shark"; OriginalName <- "Whiskery_Shark"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/Whiskery_Shark/"; TempPath <- "Temp/Assess_temp_Whiskery_Shark/"; NextraCat <- 2  }
   if (Ispec=="D29") { Species <- "Red_Emperor_Pilbara_2A_nodevs"; OriginalName <- "Red_Emperor_Pilbara_2A_nodevs"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/Red_Emperor_Pilbara_2A_nodevs/"; TempPath <- "Temp/Assess_temp_Red_Emperor_Pilbara_2A_nodevs/"; Narea <- 2  }
   if (Ispec=="D30") { Species <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; OriginalName <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/Red_Emperor_Pilbara_2A_nodevs_CVfix/"; TempPath <- "Temp/Assess_temp_Red_Emperor_Pilbara_2A_nodevs_CVfix/"; Narea <- 2  }
-
+  if (Ispec=="D31") { Species <- "WA_Dhufish_2025"; OriginalName <- "WA_Dhufish_2025"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/WA_Dhufish_2025/"; TempPath <- "Temp/Assess_temp_WA_Dhufish_2025/"}
+  if (Ispec=="D32") { Species <- "WA_Dhufish_Fake2A"; OriginalName <- "WA_Dhufish_Fake2A"; OriginalPath <- "Base Other Files/"; ResultsPath <- "Results/WA_Dhufish_Fake2A/"; TempPath <- "Temp/Assess_temp_WA_Dhufish_Fake2A/"}
+  
   if (Ispec=="E1") { Species <- "Pink ling";      OriginalName <- "Pink ling";      Species3 <- "Multi-CSIRO"; OriginalPath <- "Base CSIRO Files/"; ResultsPath <- "Results/Multi-CSIRO/"; TempPath <- "Temp/Assess_temp_Multi-CSIRO/"; UseSpec <- 1  }
   if (Ispec=="E2") { Species <- "Tiger flathead"; OriginalName <- "Tiger flathead"; Species3 <- "Multi-CSIRO"; OriginalPath <- "Base CSIRO Files/"; ResultsPath <- "Results/Multi-CSIRO/"; TempPath <- "Temp/Assess_temp_Multi-CSIRO/"; UseSpec <- 2 }
   if (Ispec=="E3") { Species <- "School whiting"; OriginalName <- "School whiting"; Species3 <- "Multi-CSIRO"; OriginalPath <- "Base CSIRO Files/"; ResultsPath <- "Results/Multi-CSIRO/"; TempPath <- "Temp/Assess_temp_Multi-CSIRO/"; UseSpec <- 3 }

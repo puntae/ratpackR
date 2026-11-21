@@ -735,24 +735,82 @@ do.extract <- function(SS_folder,Species2,YearAdjust=0,AgeAdjust=F,Reduce.Uncert
   OM.obj$Env.override <- 0
   
   OM.obj$project.type <- Project.Type
-  Catch.data <- rep(0,nfleet.catch)
-  for (Ifleet in 1:nfleet.catch)
-   {
-    Index <- which(dat$catch$fleet==Ifleet & dat$catch$year < 0)
-    if (length(Index)>0)
-    {  CC <- dat$catch$catch[Index];Catch.data[Ifleet] <- CC; }
-   }
+  
+  
+  # Catch.data <- rep(0,nfleet.catch)
+  # for (Ifleet in 1:nfleet.catch)
+  #  {
+  #   Index <- which(dat$catch$fleet==Ifleet & dat$catch$year < 0)
+  #   if (length(Index)>0)
+  #   {  CC <- dat$catch$catch[Index];Catch.data[Ifleet] <- CC; }
+  #  }
+  # OM.obj$eqn.catch <- Catch.data
+  # 
+  # Catch.data <- matrix(0,ncol=nfleet.catch,nrow=nyearsOrig)
+  # for (Ifleet in 1:nfleet.catch)
+  #  {
+  #   Index <- which(dat$catch$fleet==Ifleet & dat$catch$year %in% c(styr:endyrOrig))
+  #   CC <- dat$catch$catch[Index]
+  #   Ind <- dat$catch$year[Index]-styr+1
+  #   Catch.data[Ind,Ifleet] <- dat$catch$catch[Index]
+  #  }
+  # OM.obj$hist.catch <- cbind(c(styr:endyrOrig),Catch.data)
+  
+  # ------------------------------------------------------------------------------------------------------------------
+  # FIXED: Extract retained catch in BIOMASS (tonnes) from model0$timeseries so that fleets in numbers (units = 2) 
+  # are correctly converted to tonnage via Stock Synthesis's internal length-weight relationship.
+  # ------------------------------------------------------------------------------------------------------------------
+  
+  Catch.data <- rep(0, nfleet.catch)
+  for (Ifleet in 1:nfleet.catch) {
+    Index <- which(dat$catch$fleet == Ifleet & dat$catch$year < 0)
+    if (length(Index) > 0) {
+      Catch.data[Ifleet] <- dat$catch$catch[Index]
+    } else {
+      # Fallback to year styr biomass from model0 if eqn catch not in dat$catch
+      col_name <- paste0("retain(B):_", Ifleet)
+      if (!col_name %in% colnames(model0$timeseries)) col_name <- paste0("dead(B):_", Ifleet)
+      if (col_name %in% colnames(model0$timeseries)) {
+        ts_row <- model0$timeseries[model0$timeseries$Yr == styr & model0$timeseries$Seas == 1, ]
+        if (nrow(ts_row) > 0) Catch.data[Ifleet] <- ts_row[, col_name]
+      }
+    }
+  }
   OM.obj$eqn.catch <- Catch.data
-
-  Catch.data <- matrix(0,ncol=nfleet.catch,nrow=nyearsOrig)
-  for (Ifleet in 1:nfleet.catch)
-   {
-    Index <- which(dat$catch$fleet==Ifleet & dat$catch$year %in% c(styr:endyrOrig))
-    CC <- dat$catch$catch[Index]
-    Ind <- dat$catch$year[Index]-styr+1
-    Catch.data[Ind,Ifleet] <- dat$catch$catch[Index]
-   }
-  OM.obj$hist.catch <- cbind(c(styr:endyrOrig),Catch.data)
+  
+  Catch.data <- matrix(0, ncol = nfleet.catch, nrow = nyearsOrig)
+  for (Ifleet in 1:nfleet.catch) {
+    col_name <- paste0("retain(B):_", Ifleet)
+    if (!col_name %in% colnames(model0$timeseries)) col_name <- paste0("dead(B):_", Ifleet)
+    
+    if (col_name %in% colnames(model0$timeseries)) {
+      # Extract annual biomass from SS3 timeseries report
+      ts_subset <- model0$timeseries[model0$timeseries$Yr %in% c(styr:endyrOrig) & model0$timeseries$Seas == 1, ]
+      if (nrow(ts_subset) == nyearsOrig) {
+        Catch.data[, Ifleet] <- ts_subset[, col_name]
+      } else {
+        # Fallback matching by year if dimensions differ
+        for (i in 1:nyearsOrig) {
+          yr_val <- styr + i - 1
+          row_match <- which(model0$timeseries$Yr == yr_val & model0$timeseries$Seas == 1)
+          if (length(row_match) > 0) Catch.data[i, Ifleet] <- model0$timeseries[row_match[1], col_name]
+        }
+      }
+    } else {
+      # Fallback to dat$catch if timeseries column is missing
+      Index <- which(dat$catch$fleet == Ifleet & dat$catch$year %in% c(styr:endyrOrig))
+      if (length(Index) > 0) {
+        CC <- dat$catch$catch[Index]
+        Ind <- dat$catch$year[Index] - styr + 1
+        Catch.data[Ind, Ifleet] <- CC
+      }
+    }
+  }
+  OM.obj$hist.catch <- cbind(c(styr:endyrOrig), Catch.data)
+  
+  ## END BC FIX
+  
+  
   if (NextraCat>0)
    for (Iyear in 1:NextraCat)
     { Vec <- c(as.numeric(CatYears[Iyear]), as.numeric(CatFuture[Iyear,1:nfleet.catch])); OM.obj$hist.catch <- rbind(OM.obj$hist.catch,Vec)  }  
@@ -1741,7 +1799,7 @@ ncol.Cat <- length(ExtraCat[1,])
 #for (Ispec in paste0("C",c(6,8,9,10,11)))
 #for (Ispec in paste0("C",c(8,9)))
 #for (Ispec in paste0("C",c(9)))
-for (Ispec in paste0("D",c(11)))
+for (Ispec in paste0("D",c(31)))
 ##for (Ispec in paste0("D",c(12,19,21,28)))
 # for (Ispec in c(paste0("D",c(6:12, 20, 22, 28)) ) ) # skip 13 20
 
@@ -1786,7 +1844,7 @@ for (Ispec in paste0("D",c(11)))
   if (Ispec=="D8")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Kimberley"; Species <- "Red_Emperor_Kimberley"  } 
   if (Ispec=="D9")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara"; Species <- "Red_Emperor_Pilbara"  } 
   if (Ispec=="D10")  { Analsis.Type <- 4; SS_folder <- "SandySprat"; Species <- "SandySprat"  } 
-  if (Ispec=="D11")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish"; Species <- "WA_Dhufish" ; FakeAreas <- 2 } 
+  if (Ispec=="D11")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish"; Species <- "WA_Dhufish" ; FakeAreas <- 0 } 
   if (Ispec=="D12")  { Analsis.Type <- 4; SS_folder <- "Sandbar_Shark"; Species <- "Sandbar_Shark"  } 
   if (Ispec=="D13")  { Analsis.Type <- 4; SS_folder <- "Sandbar_Shark2"; Species <- "Sandbar_Shark2"  } 
   if (Ispec=="D14")  { Analsis.Type <- 4; SS_folder <- "Sardine"; Species <- "Sardine"  } 
@@ -1806,7 +1864,8 @@ for (Ispec in paste0("D",c(11)))
   if (Ispec=="D18")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara_2A"; Species <- "Red_Emperor_Pilbara_2A"; Project.Type <- 3 }
   if (Ispec=="D29")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara_2A_nodevs"; Species <- "Red_Emperor_Pilbara_2A_nodevs"; Project.Type <- 1 }
   if (Ispec=="D30")  { Analsis.Type <- 4; SS_folder <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; Species <- "Red_Emperor_Pilbara_2A_nodevs_CVfix"; Project.Type <- 1 }
-
+  if (Ispec=="D31")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish_2025"; Species <- "WA_Dhufish_2025"} 
+  if (Ispec=="D32")  { Analsis.Type <- 4; SS_folder <- "WA_Dhufish_Fake2A"; Species <- "WA_Dhufish_Fake2A"; FakeAreas <- 2} 
   
   if (Analsis.Type==1) BasePath <- paste0(Path,"Inputs Buffer/")
   if (Analsis.Type==1) AssignmentPath <- paste0(Path,"Base Buffer files/")

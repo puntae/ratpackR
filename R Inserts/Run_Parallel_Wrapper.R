@@ -14,7 +14,13 @@ if (!dir.exists(RcppCache)) dir.create(RcppCache)
 
 message("\nPre-compiling C++ model on master node...")
 env_before <- ls(envir = globalenv())
-Rcpp::sourceCpp("R inserts/Model.cpp", cacheDir = RcppCache)
+
+if (exists("hndl.RatPack")) {
+  Rcpp::sourceCpp(file.path(hndl.RatPack, "R inserts/Model.cpp"), cacheDir = RcppCache)
+} else {
+  Rcpp::sourceCpp("R inserts/Model.cpp", cacheDir = RcppCache)
+}
+
 env_after <- ls(envir = globalenv())
 cpp_objects <- setdiff(env_after, env_before)
 
@@ -60,7 +66,7 @@ Write_starter <- function(Folder, Istock, Isim, Year) {
   write("0 # MCMC output detail: integer part (0=default; 1=adds obj func components); and decimal part (added to SR_LN(R0) on first call to mcmc)",file=file.name,append=T)
   write("0 # ALK tolerance (example 0.0001)",file=file.name,append=T)
   
-  # Guaranteed unique seed based on the simulation, year, and stock[cite: 4]
+  # Guaranteed unique seed based on the simulation, year, and stock[cite: 6]
   ss_seed <- (Isim * 100000) + (Year * 100) + Istock
   write(paste0(ss_seed, " # random number seed for bootstrap data"), file=file.name, append=T)
   
@@ -80,8 +86,13 @@ Run_Tier1a <- function(Isim, Istock, Iarea, Year) {
   
   Nhist <- Stock[[Istock]]$Nhist
   
-  File.from <- paste0(Path, "CodeBase/SS.exe")
-  File.to <- paste0(Folder, "SS.exe")
+  if (exists("hndl.RatPack")) {
+    File.from <- file.path(hndl.RatPack, "CodeBase", "SS.exe")
+    File.to <- Folder
+  } else {
+    File.from <- paste0(Path, "CodeBase/SS.exe")
+    File.to <- paste0(Folder, "SS.exe")
+  }
   file.copy(File.from, File.to)
   
   Write_starter(Folder, Istock, Isim, Year)
@@ -99,12 +110,12 @@ Run_Tier1a <- function(Isim, Istock, Iarea, Year) {
   if (Stock[[Istock]]$Ass$SS_est_opt == "EstOnly") vv <- system("SS -est", intern = T, invisible = TRUE)
   if (file.exists("ss3par.par")) file.remove("ss3par.par", showWarnings = F)
   
-  # Verify Stock Synthesis actually produced a valid report[cite: 4]
+  # Verify Stock Synthesis actually produced a valid report[cite: 6]
   if (!file.exists("Report.sso") || file.info("Report.sso")$size == 0) {
     stop(paste("SS3 crashed or failed to write Report.sso in Sim", Isim, "Year", Year, "for area", Iarea))
   }
   
-  # Safely read the output using local assignment (<-) to prevent memory bloat in the worker[cite: 4]
+  # Safely read the output using local assignment (<-) to prevent memory bloat in the worker[cite: 6]
   modeloutput <- tryCatch({
     SS_output(dir = Folder, covar = F, printstats = FALSE, verbose = FALSE, warn = FALSE)
   }, error = function(e) {
@@ -124,7 +135,7 @@ Run_Tier1a <- function(Isim, Istock, Iarea, Year) {
   N.out.years <- modeloutput$endyr - modeloutput$startyr + 1 + modeloutput$N_forecast_yrs
   if (N.out.years > Nhist + General$Nproj + 1) N.out.years <- Nhist + General$Nproj + 1
   
-  # Global assignment correctly updates the Stock list local to the parallel worker[cite: 4]
+  # Global assignment correctly updates the Stock list local to the parallel worker[cite: 6]
   Stock[[Istock]]$Ass$SSB.estimates[Isim, Year-Nhist+1, Iarea, 1:N.out.years] <<- modeloutput$derived_quants$Value[Index1+1:N.out.years-1]
   Stock[[Istock]]$Ass$Depl.estimates[Isim, Year-Nhist+1, Iarea, 1:N.out.years] <<- modeloutput$derived_quants$Value[Index1+1:N.out.years-1] / SSB0 * 100
   Index1 <- which(modeloutput$recruit$Yr == modeloutput$startyr)
@@ -298,23 +309,31 @@ DoRun <- function(GeneralFile, RunNo, UseParallel = TRUE) {
     
     cl <- parallel::makeCluster(n_cores, outfile = "")
     doParallel::registerDoParallel(cl)
-    parallel::clusterExport(cl, c("Path", "RcppCache"), envir = .GlobalEnv)
     
-    # We use a worker-specific cache directory to eliminate Rcpp SQLite locking issues
+    cluster_vars <- c("Path")
+    if (exists("hndl.RatPack")) cluster_vars <- c(cluster_vars, "hndl.RatPack")
+    parallel::clusterExport(cl, cluster_vars, envir = .GlobalEnv)
+    
     parallel::clusterEvalQ(cl, {
       if (exists("Path")) setwd(Path)
       worker_cache <- file.path(tempdir(), paste0("RcppCache_", Sys.getpid()))
       if (!dir.exists(worker_cache)) dir.create(worker_cache, recursive = TRUE)
-      Rcpp::sourceCpp("R inserts/Model.cpp", cacheDir = worker_cache)
+      
+      if (exists("hndl.RatPack")) {
+        cpp_file <- file.path(hndl.RatPack, "R inserts/Model.cpp")
+      } else {
+        cpp_file <- "R inserts/Model.cpp"
+      }
+      Rcpp::sourceCpp(cpp_file, cacheDir = worker_cache)
     })
   } else {
     foreach::registerDoSEQ()
   }
   
-  # Explicitly prevent foreach from exporting C++ pointers and the massive Stock object
   vars_to_exclude <- c("Stock", "Stock_Tune", if (exists("cpp_objects")) cpp_objects)
   safe_globals <- setdiff(ls(envir = globalenv()), vars_to_exclude)
   export_vars <- unique(c("General", "R0mult", "Seeds", "RunNo", safe_globals))
+  if (exists("hndl.RatPack")) export_vars <- unique(c(export_vars, "hndl.RatPack"))
   
   results <- foreach(Isim = 1:General$Nsim, .packages = c("r4ss", "Rcpp", "RTMB", "RcppArmadillo"), .export = export_vars, .noexport = vars_to_exclude, .options.snow = list(preschedule = FALSE)) %dopar% {
     
@@ -330,7 +349,6 @@ DoRun <- function(GeneralFile, RunNo, UseParallel = TRUE) {
       
       General$RunFolder <- SimFolder # This ensures Run_Tier1a nests SS_Sim inside SimFolder safely
       General$FolderResults <- SimFolder
-      General$BiolSaveName <- paste0(SimFolder, "HistBiol_Sim", Isim, ".Out")
       General$ProjAllSaveName <- paste0(SimFolder, "ProjectAll_Sim", Isim, ".Out")
       General$ProjFleetSaveName <- paste0(SimFolder, "ProjectFleet_Sim", Isim, ".Out")
       General$ProjFleetAreaSaveName <- paste0(SimFolder, "ProjectFleetArea_Sim", Isim, ".Out")
@@ -346,6 +364,7 @@ DoRun <- function(GeneralFile, RunNo, UseParallel = TRUE) {
       assign("R0mult", R0mult, envir = .GlobalEnv)
       assign("Seeds", Seeds, envir = .GlobalEnv)
       if (exists("Path")) assign("Path", Path, envir = .GlobalEnv)
+      if (exists("hndl.RatPack")) assign("hndl.RatPack", hndl.RatPack, envir = .GlobalEnv)
       
       set.seed(Seeds[Isim, 1])
       
@@ -362,8 +381,7 @@ DoRun <- function(GeneralFile, RunNo, UseParallel = TRUE) {
       }
       assign("Stock", Stock, envir = .GlobalEnv)
       
-      Worker_Step <- "WriteBiol & WriteLog"
-      for (Istock in 1:General$Nstocks) WriteBiol(Istock, General$BiolSaveName, General$FolderResults)
+      Worker_Step <- "WriteLog"
       for (Istock in 1:General$Nstocks) WriteLog(Isim, Istock, General$LogName)
       
       Worker_Step <- "Do.Project (Running Core Projections)"
@@ -379,7 +397,6 @@ DoRun <- function(GeneralFile, RunNo, UseParallel = TRUE) {
       return(list(status = "SUCCESS", Isim = Isim, Files = c(General$ProjAllSaveName, General$ProjFleetSaveName, General$ProjFleetAreaSaveName, General$EstSaveName, General$ParSaveName, General$AllParSaveName, General$InsuranceSaveName, General$MultiSaveName, General$WASaveName, General$LogName)))
       
     }, error = function(e) { 
-      # Capture stack trace for granular debugging if necessary
       calls <- sys.calls()
       trace_str <- paste(sapply(calls, function(x) paste(deparse(x), collapse = " ")), collapse = "\n  ")
       err_msg <- sprintf("\nCRASH AT STEP: '%s'\nError: %s\nTraceback:\n  %s\n", Worker_Step, e$message, trace_str)
